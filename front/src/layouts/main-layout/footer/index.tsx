@@ -14,8 +14,13 @@ const Footer = () => {
       fontWeight={500}
     >
       Made with ❤️ by{' '}
-      <Link href="https://themewagon.com/" target="_blank" rel="noreferrer">
-        {'ThemeWagon'}
+      <Link href="https://github.com/amikahlon" target="_blank" rel="noreferrer">
+        {'Ami Kahlon'}
+      </Link>{' '}
+      And
+      {' '}
+      <Link href="https://github.com/GuyMishan" target="_blank" rel="noreferrer">
+        {'Guy Mishan'}
       </Link>
     </Typography>
   );

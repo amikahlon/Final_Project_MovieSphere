@@ -1,23 +1,22 @@
-import { useState, ChangeEvent, FormEvent } from "react";
-import Link from "@mui/material/Link";
-import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
-import InputAdornment from "@mui/material/InputAdornment";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
-import TextField from "@mui/material/TextField";
-import Checkbox from "@mui/material/Checkbox";
-import IconifyIcon from "../../components/base/IconifyIcon";
-import paths from "../../routes/paths";
+import { useState, ChangeEvent, FormEvent } from 'react';
+import Link from '@mui/material/Link';
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import InputAdornment from '@mui/material/InputAdornment';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import TextField from '@mui/material/TextField';
+import Checkbox from '@mui/material/Checkbox';
+import paths from 'routes/paths';
 
 interface User {
   [key: string]: string;
 }
 
 const Signin = () => {
-  const [user, setUser] = useState<User>({ email: "", password: "" });
+  const [user, setUser] = useState<User>({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -43,8 +42,7 @@ const Signin = () => {
           variant="contained"
           color="secondary"
           fullWidth
-          startIcon={<IconifyIcon icon="logos:google-icon" />}
-          sx={{ bgcolor: "info.main", "&:hover": { bgcolor: "info.main" } }}
+          sx={{ bgcolor: 'info.main', '&:hover': { bgcolor: 'info.main' } }}
         >
           Google
         </Button>
@@ -52,8 +50,7 @@ const Signin = () => {
           variant="contained"
           color="secondary"
           fullWidth
-          startIcon={<IconifyIcon icon="logos:apple" sx={{ mb: 0.5 }} />}
-          sx={{ bgcolor: "info.main", "&:hover": { bgcolor: "info.main" } }}
+          sx={{ bgcolor: 'info.main', '&:hover': { bgcolor: 'info.main' } }}
         >
           Apple
         </Button>
@@ -61,13 +58,7 @@ const Signin = () => {
 
       <Divider sx={{ my: 4 }}>or Signin with</Divider>
 
-      <Stack
-        component="form"
-        mt={3}
-        onSubmit={handleSubmit}
-        direction="column"
-        gap={2}
-      >
+      <Stack component="form" mt={3} onSubmit={handleSubmit} direction="column" gap={2}>
         <TextField
           id="email"
           name="email"
@@ -83,7 +74,6 @@ const Signin = () => {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <IconifyIcon icon="ic:baseline-alternate-email" />
               </InputAdornment>
             ),
           }}
@@ -91,7 +81,7 @@ const Signin = () => {
         <TextField
           id="password"
           name="password"
-          type={showPassword ? "text" : "password"}
+          type={showPassword ? 'text' : 'password'}
           value={user.password}
           onChange={handleInputChange}
           variant="filled"
@@ -102,7 +92,6 @@ const Signin = () => {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <IconifyIcon icon="ic:outline-lock" />
               </InputAdornment>
             ),
             endAdornment: (
@@ -110,23 +99,15 @@ const Signin = () => {
                 position="end"
                 sx={{
                   opacity: user.password ? 1 : 0,
-                  pointerEvents: user.password ? "auto" : "none",
+                  pointerEvents: user.password ? 'auto' : 'none',
                 }}
               >
                 <IconButton
                   aria-label="toggle password visibility"
                   onClick={() => setShowPassword(!showPassword)}
-                  sx={{ border: "none", bgcolor: "transparent !important" }}
+                  sx={{ border: 'none', bgcolor: 'transparent !important' }}
                   edge="end"
                 >
-                  <IconifyIcon
-                    icon={
-                      showPassword
-                        ? "ic:outline-visibility"
-                        : "ic:outline-visibility-off"
-                    }
-                    color="neutral.light"
-                  />
                 </IconButton>
               </InputAdornment>
             ),
@@ -135,14 +116,7 @@ const Signin = () => {
 
         <Stack mt={-1.25} alignItems="center" justifyContent="space-between">
           <FormControlLabel
-            control={
-              <Checkbox
-                id="checkbox"
-                name="checkbox"
-                size="medium"
-                color="primary"
-              />
-            }
+            control={<Checkbox id="checkbox" name="checkbox" size="medium" color="primary" />}
             label="Remember me"
             sx={{ ml: -0.75 }}
           />
@@ -156,13 +130,7 @@ const Signin = () => {
         </Button>
       </Stack>
 
-      <Typography
-        mt={5}
-        variant="body2"
-        color="text.secondary"
-        align="center"
-        letterSpacing={0.25}
-      >
+      <Typography mt={5} variant="body2" color="text.secondary" align="center" letterSpacing={0.25}>
         Don't have an account? <Link href={paths.signup}>Signup</Link>
       </Typography>
     </>

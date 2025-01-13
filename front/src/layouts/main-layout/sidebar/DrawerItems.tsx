@@ -1,17 +1,14 @@
-import { fontFamily } from "../../../theme/typography";
-import Link from "@mui/material/Link";
-import Box from "@mui/material/Box";
-import List from "@mui/material/List";
-import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
-import ButtonBase from "@mui/material/ButtonBase";
-import Typography from "@mui/material/Typography";
-import ListItem from "./list-items/ListItem";
-import CollapseListItem from "./list-items/CollapseListItem";
-import Image from "../../../components/base/Image";
-import IconifyIcon from "../../../components/base/IconifyIcon";
-import LogoImg from "../../../assets/images/logo.png";
-import sitemap from "../../../routes/sitemap";
+import { fontFamily } from 'theme/typography';
+import Link from '@mui/material/Link';
+import Box from '@mui/material/Box';
+import List from '@mui/material/List';
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import ButtonBase from '@mui/material/ButtonBase';
+import Typography from '@mui/material/Typography';
+import ListItem from './list-items/ListItem';
+import CollapseListItem from './list-items/CollapseListItem';
+import sitemap from 'routes/sitemap';
 
 const DrawerItems = () => {
   return (
@@ -30,13 +27,6 @@ const DrawerItems = () => {
         zIndex={1000}
       >
         <ButtonBase component={Link} href="/" disableRipple>
-          <Image
-            src={LogoImg}
-            alt="logo"
-            height={52}
-            width={52}
-            sx={{ mr: 1.75 }}
-          />
           <Box>
             <Typography
               mt={0.25}
@@ -68,15 +58,12 @@ const DrawerItems = () => {
             <CollapseListItem key={route.id} {...route} />
           ) : (
             <ListItem key={route.id} {...route} />
-          )
+          ),
         )}
       </List>
 
       <Box mt="auto" px={3} pb={6}>
-        <Button
-          variant="text"
-          startIcon={<IconifyIcon icon="ic:baseline-logout" />}
-        >
+        <Button variant="text">
           Log Out
         </Button>
       </Box>
