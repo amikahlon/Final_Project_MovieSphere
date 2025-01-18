@@ -7,6 +7,8 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
+import Box from '@mui/material/Box';
+import GoogleIcon from '@mui/icons-material/Google';
 import paths from 'routes/paths';
 
 interface User {
@@ -26,35 +28,56 @@ const Signup = () => {
     console.log(user);
   };
 
+  const handleGoogleSignIn = () => {
+    console.log('Google sign-in clicked');
+  };
+
   return (
     <>
+      <Box sx={{ width: '100%', textAlign: 'center', mb: 4 }}>
+        <img
+          src="/logo.svg"
+          alt="MovieSphere Logo"
+          style={{
+            width: '200px',
+            height: 'auto',
+          }}
+        />
+      </Box>
+
       <Typography align="center" variant="h4">
         Sign Up
       </Typography>
-      <Typography mt={1.5} align="center" variant="body2">
-        Let's Join us! create account with,
+      <Typography mt={1.5} align="center" variant="body2" mb={4}>
+        Let's Join us! create account with
       </Typography>
 
-      <Stack mt={3} spacing={1.75} width={1}>
-        <Button
-          variant="contained"
-          color="secondary"
-          fullWidth
-          sx={{ bgcolor: 'info.main', '&:hover': { bgcolor: 'info.main' } }}
-        >
-          Google
-        </Button>
-        <Button
-          variant="contained"
-          color="secondary"
-          fullWidth
-          sx={{ bgcolor: 'info.main', '&:hover': { bgcolor: 'info.main' } }}
-        >
-          Apple
-        </Button>
-      </Stack>
+      <Button
+        variant="outlined"
+        fullWidth
+        startIcon={<GoogleIcon />}
+        onClick={handleGoogleSignIn}
+        sx={{
+          mb: 3,
+          color: 'text.primary',
+          borderColor: 'grey.300',
+          textTransform: 'none',
+          '&:hover': {
+            borderColor: 'grey.400',
+            bgcolor: 'grey.50',
+          },
+        }}
+      >
+        Continue with Google
+      </Button>
 
-      <Divider sx={{ my: 4 }}>or Signup with</Divider>
+      <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+        <Divider sx={{ flex: 1 }} />
+        <Typography variant="body2" color="text.secondary">
+          or
+        </Typography>
+        <Divider sx={{ flex: 1 }} />
+      </Stack>
 
       <Stack component="form" mt={3} onSubmit={handleSubmit} direction="column" gap={2}>
         <TextField
@@ -70,10 +93,7 @@ const Signup = () => {
           autoFocus
           required
           InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-              </InputAdornment>
-            ),
+            startAdornment: <InputAdornment position="start"></InputAdornment>,
           }}
         />
         <TextField
@@ -88,10 +108,7 @@ const Signup = () => {
           fullWidth
           required
           InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-              </InputAdornment>
-            ),
+            startAdornment: <InputAdornment position="start"></InputAdornment>,
           }}
         />
         <TextField
@@ -106,10 +123,7 @@ const Signup = () => {
           fullWidth
           required
           InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-              </InputAdornment>
-            ),
+            startAdornment: <InputAdornment position="start"></InputAdornment>,
             endAdornment: (
               <InputAdornment
                 position="end"
@@ -123,8 +137,7 @@ const Signup = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   sx={{ border: 'none', bgcolor: 'transparent !important' }}
                   edge="end"
-                >
-                </IconButton>
+                ></IconButton>
               </InputAdornment>
             ),
           }}

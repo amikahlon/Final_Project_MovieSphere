@@ -2,14 +2,16 @@ import { useState, ChangeEvent, FormEvent } from 'react';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
 import InputAdornment from '@mui/material/InputAdornment';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
 import Checkbox from '@mui/material/Checkbox';
+import Box from '@mui/material/Box';
 import paths from 'routes/paths';
+import GoogleIcon from '@mui/icons-material/Google';
+import { Divider } from '@mui/material';
 
 interface User {
   [key: string]: string;
@@ -28,35 +30,57 @@ const Signin = () => {
     console.log(user);
   };
 
+  const handleGoogleSignIn = () => {
+    // Add Google sign-in logic here
+    console.log('Google sign-in clicked');
+  };
+
   return (
     <>
+      <Box sx={{ width: '100%', textAlign: 'center', mb: 4 }}>
+        <img
+          src="/logo.svg"
+          alt="MovieSphere Logo"
+          style={{
+            width: '200px',
+            height: 'auto',
+          }}
+        />
+      </Box>
+
       <Typography align="center" variant="h4">
         Sign In
       </Typography>
-      <Typography mt={1.5} align="center" variant="body2">
-        Welcome back! Let's continue with,
+      <Typography mt={1.5} align="center" variant="body2" mb={4}>
+        Welcome back! Please enter your details
       </Typography>
 
-      <Stack mt={3} spacing={1.75} width={1}>
-        <Button
-          variant="contained"
-          color="secondary"
-          fullWidth
-          sx={{ bgcolor: 'info.main', '&:hover': { bgcolor: 'info.main' } }}
-        >
-          Google
-        </Button>
-        <Button
-          variant="contained"
-          color="secondary"
-          fullWidth
-          sx={{ bgcolor: 'info.main', '&:hover': { bgcolor: 'info.main' } }}
-        >
-          Apple
-        </Button>
-      </Stack>
+      <Button
+        variant="outlined"
+        fullWidth
+        startIcon={<GoogleIcon />}
+        onClick={handleGoogleSignIn}
+        sx={{
+          mb: 3,
+          color: 'text.primary',
+          borderColor: 'grey.300',
+          textTransform: 'none',
+          '&:hover': {
+            borderColor: 'grey.400',
+            bgcolor: 'grey.50',
+          },
+        }}
+      >
+        Continue with Google
+      </Button>
 
-      <Divider sx={{ my: 4 }}>or Signin with</Divider>
+      <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+        <Divider sx={{ flex: 1 }} />
+        <Typography variant="body2" color="text.secondary">
+          or
+        </Typography>
+        <Divider sx={{ flex: 1 }} />
+      </Stack>
 
       <Stack component="form" mt={3} onSubmit={handleSubmit} direction="column" gap={2}>
         <TextField
@@ -72,10 +96,7 @@ const Signin = () => {
           autoFocus
           required
           InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-              </InputAdornment>
-            ),
+            startAdornment: <InputAdornment position="start"></InputAdornment>,
           }}
         />
         <TextField
@@ -90,10 +111,7 @@ const Signin = () => {
           fullWidth
           required
           InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-              </InputAdornment>
-            ),
+            startAdornment: <InputAdornment position="start"></InputAdornment>,
             endAdornment: (
               <InputAdornment
                 position="end"
@@ -107,8 +125,7 @@ const Signin = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   sx={{ border: 'none', bgcolor: 'transparent !important' }}
                   edge="end"
-                >
-                </IconButton>
+                ></IconButton>
               </InputAdornment>
             ),
           }}

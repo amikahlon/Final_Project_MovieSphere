@@ -4,13 +4,7 @@ import Paper from '@mui/material/Paper';
 
 const AuthLayout = ({ children }: PropsWithChildren) => {
   return (
-    <Stack
-      component="main"
-      alignItems="center"
-      justifyContent="center"
-      width={1}
-      minHeight="100vh"
-    >
+    <Stack component="main" alignItems="center" justifyContent="center" width={1} minHeight="100vh">
       {/* Background Image and Overlay */}
       <div
         style={{
@@ -38,12 +32,22 @@ const AuthLayout = ({ children }: PropsWithChildren) => {
           style={{
             position: 'absolute',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)', // Black with 50% opacity
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
           }}
         ></div>
       </div>
       {/* Content */}
-      <Paper sx={{ px: { xs: 2, sm: 3.5 }, py: 4, width: 1, maxWidth: 460 }}>{children}</Paper>
+      <Paper
+        sx={{
+          px: { xs: 2, sm: 3.5 },
+          py: 4,
+          width: 1,
+          maxWidth: 460,
+          backgroundColor: 'rgba(255, 255, 255)',
+        }}
+      >
+        {children}
+      </Paper>{' '}
     </Stack>
   );
 };
