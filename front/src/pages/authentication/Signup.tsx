@@ -8,28 +8,61 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import Box from '@mui/material/Box';
-import GoogleIcon from '@mui/icons-material/Google';
+import { Person, Email, Lock } from '@mui/icons-material'; // Import icons
 import paths from 'routes/paths';
+import { CredentialResponse, GoogleLogin } from '@react-oauth/google';
+import api from '../../../api';
 
 interface User {
-  [key: string]: string;
+  username: string;
+  email: string;
+  password: string;
 }
 
 const Signup = () => {
-  const [user, setUser] = useState<User>({ name: '', email: '', password: '' });
+  const [user, setUser] = useState<User>({ username: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(user);
+    try {
+      // Regular signup
+      const response = await api.post('/users/signup', user);
+      const { accessToken, refreshToken } = response.data;
+
+      // Store tokens in localStorage
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+
+      alert('Signup successful');
+      window.location.href = '/'; // Redirect to homepage
+    } catch (error) {
+      console.error('Signup error:', error);
+      alert('Signup failed');
+    }
   };
 
-  const handleGoogleSignIn = () => {
-    console.log('Google sign-in clicked');
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    try {
+      const response = await api.post('/users/google-signup', {
+        credential: credentialResponse.credential,
+      });
+      const { accessToken, refreshToken } = response.data;
+
+      // Store tokens in localStorage
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+
+      alert('Google Signup successful');
+      window.location.href = '/'; // Redirect to homepage
+    } catch (error) {
+      console.error('Google Signup error:', error);
+      alert('Google Signup failed');
+    }
   };
 
   return (
@@ -48,28 +81,19 @@ const Signup = () => {
       <Typography align="center" variant="h4">
         Sign Up
       </Typography>
-      <Typography mt={1.5} align="center" variant="body2" mb={4}>
-        Let's Join us! create account with
+      <Typography mt={1.5} align="center" variant="body2" mb={2}>
+        Let's Join us! Create an account with
       </Typography>
 
-      <Button
-        variant="outlined"
-        fullWidth
-        startIcon={<GoogleIcon />}
-        onClick={handleGoogleSignIn}
-        sx={{
-          mb: 3,
-          color: 'text.primary',
-          borderColor: 'grey.300',
-          textTransform: 'none',
-          '&:hover': {
-            borderColor: 'grey.400',
-            bgcolor: 'grey.50',
-          },
-        }}
-      >
-        Continue with Google
-      </Button>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px' }}>
+        <GoogleLogin
+          text="signup_with"
+          onSuccess={handleGoogleSuccess}
+          onError={() => {
+            console.error('Google Login Failed');
+          }}
+        />
+      </div>
 
       <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
         <Divider sx={{ flex: 1 }} />
@@ -81,10 +105,10 @@ const Signup = () => {
 
       <Stack component="form" mt={3} onSubmit={handleSubmit} direction="column" gap={2}>
         <TextField
-          id="name"
-          name="name"
+          id="username"
+          name="username"
           type="text"
-          value={user.name}
+          value={user.username}
           onChange={handleInputChange}
           variant="filled"
           placeholder="Your Name"
@@ -93,7 +117,11 @@ const Signup = () => {
           autoFocus
           required
           InputProps={{
-            startAdornment: <InputAdornment position="start"></InputAdornment>,
+            startAdornment: (
+              <InputAdornment position="start">
+                <Person />
+              </InputAdornment>
+            ),
           }}
         />
         <TextField
@@ -108,7 +136,11 @@ const Signup = () => {
           fullWidth
           required
           InputProps={{
-            startAdornment: <InputAdornment position="start"></InputAdornment>,
+            startAdornment: (
+              <InputAdornment position="start">
+                <Email />
+              </InputAdornment>
+            ),
           }}
         />
         <TextField
@@ -123,33 +155,32 @@ const Signup = () => {
           fullWidth
           required
           InputProps={{
-            startAdornment: <InputAdornment position="start"></InputAdornment>,
+            startAdornment: (
+              <InputAdornment position="start">
+                <Lock />
+              </InputAdornment>
+            ),
             endAdornment: (
-              <InputAdornment
-                position="end"
-                sx={{
-                  opacity: user.password ? 1 : 0,
-                  pointerEvents: user.password ? 'auto' : 'none',
-                }}
-              >
+              <InputAdornment position="end">
                 <IconButton
                   aria-label="toggle password visibility"
                   onClick={() => setShowPassword(!showPassword)}
-                  sx={{ border: 'none', bgcolor: 'transparent !important' }}
-                  edge="end"
-                ></IconButton>
+                >
+                  <Typography variant="body2">
+                    {showPassword ? 'Hide' : 'Show'}
+                  </Typography>
+                </IconButton>
               </InputAdornment>
             ),
           }}
         />
-
         <Button type="submit" variant="contained" size="medium" fullWidth sx={{ mt: 1.5 }}>
           Sign Up
         </Button>
       </Stack>
 
-      <Typography mt={5} variant="body2" color="text.secondary" align="center" letterSpacing={0.25}>
-        Already have an account? <Link href={paths.signin}>Signin</Link>
+      <Typography mt={5} variant="body2" color="text.secondary" align="center">
+        Already have an account? <Link href={paths.signin}>Sign In</Link>
       </Typography>
     </>
   );
