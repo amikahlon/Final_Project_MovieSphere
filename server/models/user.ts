@@ -32,6 +32,7 @@ const UserSchema: Schema = new Schema({
     profilePicture: { type: String, default: '' },
     provider: { type: String, default: 'local' },
     providerId: { type: String, default: null },
+    favoriteGenres: {type: [String], default: []}, 
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     refreshTokens: [RefreshTokenSchema], // Array of refresh tokens
     createdAt: { type: Date, default: Date.now },

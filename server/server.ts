@@ -1,19 +1,17 @@
-import express, { Application, Request, Response, NextFunction } from 'express';
+import express, { Application } from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import routes from './routes/index';
 import cors from 'cors';
 
-// טוען משתני סביבה מקובץ .env
 dotenv.config();
 
-// יצירת אפליקציית Express
 const app: Application = express();
 
-// הגדרת Middleware לטיפול ב-JSON
+// Middleware לטיפול ב-JSON
 app.use(express.json());
 
-// Enable CORS for all origins (you can restrict it to your frontend URL in production)
+// Enable CORS for כל המקורות (ניתן לצמצם בפרודקשן)
 app.use(cors());
 
 // חיבור ל-MongoDB
@@ -23,11 +21,7 @@ mongoose
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-// Use routes under '/api'
+// Routes תחת '/api'
 app.use('/api', routes);
 
-// האזנה לשרת
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+export default app; // מייצא את השרת בלבד
