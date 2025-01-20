@@ -8,6 +8,8 @@ interface SidebarProps {
   setIsClosing: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+const drawerWidth = 300;
+
 const Sidebar = ({ mobileOpen, setMobileOpen, setIsClosing }: SidebarProps) => {
   const handleDrawerClose = () => {
     setIsClosing(true);
@@ -21,22 +23,41 @@ const Sidebar = ({ mobileOpen, setMobileOpen, setIsClosing }: SidebarProps) => {
   return (
     <Box
       component="nav"
-      width={{ lg: 300 }}
-      flexShrink={{ lg: 0 }}
-      display={{ xs: 'none', lg: 'block' }}
+      sx={{
+        width: { lg: drawerWidth },
+        flexShrink: { lg: 0 },
+      }}
     >
+      {/* Mobile drawer */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
         onTransitionEnd={handleDrawerTransitionEnd}
         onClose={handleDrawerClose}
         ModalProps={{ keepMounted: true }}
-        sx={{ display: { xs: 'block', lg: 'none' } }}
+        sx={{
+          display: { xs: 'block', lg: 'none' },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: drawerWidth,
+          },
+        }}
       >
         <DrawerItems />
       </Drawer>
 
-      <Drawer variant="permanent" sx={{ display: { xs: 'none', lg: 'block' } }} open>
+      {/* Desktop drawer */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', lg: 'block' },
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: drawerWidth,
+          },
+        }}
+        open
+      >
         <DrawerItems />
       </Drawer>
     </Box>

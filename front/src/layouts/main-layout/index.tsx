@@ -1,87 +1,55 @@
-import { useState, useEffect, PropsWithChildren } from 'react';
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { setUser, clearUser } from 'store/slices/userSlice';
-import Stack from '@mui/material/Stack';
+import { useState, PropsWithChildren } from 'react';
+import Box from '@mui/material/Box';
 import Sidebar from 'layouts/main-layout/sidebar';
 import Topbar from 'layouts/main-layout/topbar';
 import Footer from './footer';
-import api from '../../../api';
+
+const drawerWidth = 240; // רוחב Sidebar מותאם
 
 const MainLayout = ({ children }: PropsWithChildren) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const authenticateUser = async () => {
-      const accessToken = localStorage.getItem('accessToken');
-      const refreshToken = localStorage.getItem('refreshToken');
-  
-      if (!refreshToken) {
-          dispatch(clearUser());
-          navigate('/auth/signin');
-          return;
-      }
-  
-      try {
-          // Validate the access token
-          const response = await api.get('/users/me', {
-              headers: { Authorization: `Bearer ${accessToken}` },
-          });
-  
-          const { user } = response.data;
-          dispatch(setUser(user));
-      } catch (error) {
-          console.error('Access token expired, refreshing token:', error);
-  
-          try {
-              // Refresh tokens
-              const refreshResponse = await api.post('/users/refresh-token', { refreshToken });
-              const { accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshResponse.data;
-  
-              // Update tokens in localStorage
-              localStorage.setItem('accessToken', newAccessToken);
-              localStorage.setItem('refreshToken', newRefreshToken);
-  
-              // Retry `/users/me`
-              const userResponse = await api.get('/users/me', {
-                  headers: { Authorization: `Bearer ${newAccessToken}` },
-              });
-  
-              const { user } = userResponse.data;
-              dispatch(setUser(user));
-          } catch (refreshError) {
-              console.error('Failed to refresh token:', refreshError);
-  
-              // Clear tokens and state
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('refreshToken');
-              dispatch(clearUser());
-              navigate('/auth/signin');
-          }
-      }
-  };
-
-    authenticateUser();
-}, [dispatch, navigate]);
 
   return (
-    <Stack width={1} minHeight="100vh">
+    <Box sx={{ display: 'flex', minHeight: '100vh', margin: 0, padding: 0 }}>
+      {/* Sidebar */}
       <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} setIsClosing={setIsClosing} />
-      <Stack
+
+      {/* Main Content Area */}
+      <Box
         component="main"
-        direction="column"
-        px={3}
-        width={{ xs: 1, lg: `calc(100% - 300px)` }}
-        flexGrow={1}
+        sx={{
+          flexGrow: 1,
+          margin: 0,
+          padding: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          width: { xs: '100%', lg: `calc(100% - ${drawerWidth}px)` },
+          ml: { xs: 0, lg: `${drawerWidth}px` },
+          position: 'relative',
+        }}
       >
-        <Topbar isClosing={isClosing} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
-        {children}
-        <Footer />
-      </Stack>
-    </Stack>
+        <Box sx={{ margin: 0, padding: 0, flex: 1 }}>
+          {/* Topbar */}
+          <Topbar isClosing={isClosing} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
+
+          {/* Content Area */}
+          <Box
+            sx={{
+              flex: 1,
+              width: '100%',
+              margin: 0,
+              padding: { xs: '16px', lg: '24px' }, // ריווח דינמי לפי גודל המסך
+            }}
+          >
+            {children}
+          </Box>
+
+          {/* Footer */}
+          <Footer />
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

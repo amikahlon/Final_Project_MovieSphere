@@ -12,7 +12,7 @@ export const createUser = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { email, password, username } = req.body;
+  const { email, password, username, favoriteGenres } = req.body; // Add favoriteGenres to destructuring
 
   if (!email || !password || !username) {
     res.status(400).json({ message: "Missing required fields" });
@@ -34,6 +34,7 @@ export const createUser = async (
       email,
       password,
       provider: "local",
+      favoriteGenres: favoriteGenres || [], // Initialize favoriteGenres
     });
 
     await user.save();
@@ -57,8 +58,9 @@ export const createUser = async (
         id: user._id,
         email: user.email,
         username: user.username,
-        profilePicture: user.profilePicture,
+        profilePicture: user.profilePicture || "", // וודא שנשלח גם אם ריק
         role: user.role, // הוספת הרול
+        favoriteGenres: user.favoriteGenres, // Add favoriteGenres to response
       },
     });
   } catch (error) {

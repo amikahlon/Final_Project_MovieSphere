@@ -1,66 +1,45 @@
-/* eslint-disable react-refresh/only-export-components */
-import paths, { rootPaths } from './paths';
-import { Suspense, lazy } from 'react';
-import { Outlet, createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouteObject } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import MainLayout from 'layouts/main-layout';
-import Splash from 'components/loader/Splash';
-import PageLoader from 'components/loader/PageLoader';
-import AuthLayout from 'layouts/auth-layout';
+import HomePage from 'pages/HomePage/HomePage';
+import Signin from 'pages/AuthenticationPages/Signin';
+import Signup from 'pages/AuthenticationPages/Signup';
+import AddPost from 'pages/PostsPages/AddPostPage/AddPost';
+import App from 'App';
 
-const App = lazy(() => import('App'));
-const Dashboard = lazy(() => import('pages/dashboard/Dashbaord'));
-const Signin = lazy(() => import('pages/authentication/Signin'));
-const Signup = lazy(() => import('pages/authentication/Signup'));
-
-const router = createBrowserRouter(
-  [
-    {
-      element: (
-        <Suspense fallback={<Splash />}>
-          <App />
-        </Suspense>
-      ),
-      children: [
-        {
-          path: '/',
-          element: (
-            <MainLayout>
-              <Suspense fallback={<PageLoader />}>
-                <Outlet />
-              </Suspense>
-            </MainLayout>
-          ),
-          children: [
-            {
-              index: true,
-              element: <Dashboard />,
-            },
-          ],
-        },
-        {
-          path: rootPaths.authRoot,
-          element: (
-            <AuthLayout>
-              <Outlet />
-            </AuthLayout>
-          ),
-          children: [
-            {
-              path: paths.signin,
-              element: <Signin />,
-            },
-            {
-              path: paths.signup,
-              element: <Signup />,
-            },
-          ],
-        },
-      ],
-    },
-  ],
+const routes: RouteObject[] = [
   {
-    basename: '/',
+    path: '/',
+    element: <App />,
+    children: [
+      {
+        path: '/',
+        element: (
+          <MainLayout>
+            <Outlet />
+          </MainLayout>
+        ),
+        children: [
+          {
+            index: true,
+            element: <HomePage />,
+          },
+          {
+            path: '/posts/addpost',
+            element: <AddPost />,
+          },
+        ],
+      },
+      {
+        path: '/auth/signin',
+        element: <Signin />,
+      },
+      {
+        path: '/auth/signup',
+        element: <Signup />,
+      },
+    ],
   },
-);
+];
 
-export default router;
+export default createBrowserRouter(routes);

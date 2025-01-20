@@ -64,8 +64,9 @@ export const signin = async (req: Request, res: Response): Promise<void> => {
         id: user._id,
         email: user.email,
         username: user.username,
-        profilePicture: user.profilePicture,
-        role: user.role, // הוספת הרול
+        profilePicture: user.profilePicture || "", // וודא שנשלח גם אם ריק
+        role: user.role,
+        favoriteGenres: user.favoriteGenres || [], // הוספת favoriteGenres עם ברירת מחדל של מערך ריק
       },
     });
   } catch (error) {
@@ -143,8 +144,9 @@ export const googleSignin = async (
         id: user._id,
         email: user.email,
         username: user.username,
-        profilePicture: user.profilePicture,
-        role: user.role, // הוספת הרול
+        profilePicture: user.profilePicture || "", // וודא שנשלח גם אם ריק
+        role: user.role,
+        favoriteGenres: user.favoriteGenres || [],
       },
     });
   } catch (err) {
