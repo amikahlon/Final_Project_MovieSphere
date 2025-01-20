@@ -1,47 +1,42 @@
-import express from 'express';
+import express from "express";
 import {
-    googleSignin,
-    createUser,
-    getUser,
-    updateUser,
-    deleteUser,
-    getAuthenticatedUser,
-    signin,
-    logout,
-    refreshToken
-} from '../controllers/user';
-import { isAuthenticated, isAdmin } from '../middleware/auth';
+  createUser,
+  getUserById,
+  getMyProfileDetails,
+  updateUser,
+  deleteUser,
+  getAllUsers, // Add this import
+} from "../controllers/user";
+import {
+  googleSignin,
+  signin,
+  logout,
+  refreshAccessToken,
+  accessTokenStatus,
+  isAuthenticated,
+  isAdmin,
+} from "../middleware/auth";
 
 const router = express.Router();
 
-// Google signup/login
-router.post('/google-signup', googleSignin);
+// Authentication routes
+router.post("/google-signin", googleSignin);
+router.post("/signup", createUser);
+router.post("/signin", signin);
+router.post("/logout", logout);
 
-// Google signin
-router.post('/google-signin', googleSignin);
+// רענון אקסס טוקן והחלפת ריפרש טוקן מתאים במערך
+router.post("/refresh-access-token", refreshAccessToken);
+// סטטוס האקסס טוקן
+router.post("/access-token-status", accessTokenStatus);
 
-// Regular signup
-router.post('/signup', createUser);
+// עבור משתמשים מחוברים
+router.get("/me", isAuthenticated, getMyProfileDetails); // הפרופיל שלי
+router.get("/:id", isAuthenticated, getUserById); // מידע על משתמשים אחרים
 
-// Regular signin
-router.post('/signin', signin);
-
-// Regular logout
-router.post('/logout', logout);
-
-// Regular refresh-token
-router.post('/refresh-token', refreshToken);
-
-// Get authenticated user
-router.get('/me', isAuthenticated, getAuthenticatedUser);
-
-// Get user by ID
-router.get('/:id', isAuthenticated, getUser);
-
-// Update user
-router.put('/:id', isAuthenticated, updateUser);
-
-// Delete user
-router.delete('/:id', isAuthenticated, isAdmin, deleteUser);
+// Protected admin routes
+router.get("/admin/users", isAuthenticated, isAdmin, getAllUsers); // רשימת כל המשתמשים במערכת
+router.put("/:id", isAuthenticated, isAdmin, updateUser); // עדכון משתמש על ידי מנהל
+router.delete("/:id", isAuthenticated, isAdmin, deleteUser); // מחיקת משתמש על ידי מנהל
 
 export default router;

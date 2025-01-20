@@ -2,6 +2,9 @@
 module.exports = {
   testEnvironment: "node",
   transform: {
-    "^.+.tsx?$": ["ts-jest",{}],
+    "^.+\\.tsx?$": ["ts-jest", {}], // תיקון קטן ל-regex
   },
+  collectCoverage: true,
+  coverageDirectory: "coverage",
+  coverageReporters: ["html", "text"],
 };

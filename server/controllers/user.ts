@@ -1,333 +1,270 @@
-import { Request, Response } from 'express';
-import User, { IUser } from '../models/user';
-import { OAuth2Client } from 'google-auth-library';
-import { generateAccessToken,generateRefreshToken } from '../middleware/auth';
-import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
+import { Request, Response } from "express";
+import mongoose from "mongoose";
+import User from "../models/user";
+import { AuthErrorCode } from "../middleware/auth";
+import { generateAccessToken, generateRefreshToken } from "../middleware/auth";
+import { REFRESH_TOKEN_EXPIRY } from "../config/constants";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
 
-const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+//Sign up a new user
+export const createUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { email, password, username } = req.body;
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  if (!email || !password || !username) {
+    res.status(400).json({ message: "Missing required fields" });
+    return;
+  }
 
-export const googleSignin = async (req: Request, res: Response): Promise<void> => {
-    const credential = req.body.credential;
-    if (!credential) {
-        res.status(400).json({ message: 'Missing credential' });
-        return;
+  try {
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      res
+        .status(409)
+        .json({ message: "User already exists. Please login instead." });
+      return;
     }
 
-    try {
-        const ticket = await client.verifyIdToken({
-            idToken: credential,
-            audience: process.env.GOOGLE_CLIENT_ID,
-        });
+    const user = new User({
+      username,
+      email,
+      password,
+      provider: "local",
+    });
 
-        const payload = ticket.getPayload();
-        if (!payload || !payload.email || !payload.sub) {
-            res.status(400).json({ message: 'Invalid token' });
-            return;
-        }
+    await user.save();
 
-        const email = payload.email || '';
-        const name = payload.name || 'Unknown User';
-        const picture = payload.picture || '';
-        const sub = payload.sub;
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken();
 
-        let user = await User.findOne({ email });
+    user.refreshTokens.push({
+      token: crypto.createHash("sha256").update(refreshToken).digest("hex"),
+      validUntil: new Date(Date.now() + REFRESH_TOKEN_EXPIRY),
+    });
 
-        if (user) {
-            if (user.provider !== 'google') {
-                user.provider = 'google';
-                user.providerId = sub;
-                user.username = user.username || name;
-                user.profilePicture = user.profilePicture || picture;
-                await user.save();
-            }
-        } else {
-            user = new User({
-                username: name,
-                email,
-                profilePicture: picture,
-                provider: 'google',
-                providerId: sub,
-            });
-            await user.save();
-        }
+    await user.save();
 
-        const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken();
-        user.refreshTokens.push({
-            token: crypto.createHash('sha256').update(refreshToken).digest('hex'),
-            validUntil: new Date(Date.now() + REFRESH_TOKEN_EXPIRY),
-        });
-
-        await user.save();
-
-        res.status(200).json({
-            message: 'Login successful',
-            accessToken,
-            refreshToken,
-            user: {
-                id: user._id,
-                email: user.email,
-                username: user.username,
-                profilePicture: user.profilePicture,
-            },
-        });
-    } catch (err) {
-        console.error('Error verifying ID token:', err);
-        res.status(400).json({ message: 'Invalid token or server error' });
-    }
+    // Updated response to include refreshToken
+    res.status(201).json({
+      message: "User created successfully",
+      accessToken,
+      refreshToken, // Added refresh token to response
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        profilePicture: user.profilePicture,
+        role: user.role, // הוספת הרול
+      },
+    });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-// Create a new user
-export const createUser = async (req: Request, res: Response): Promise<void> => {
-    const { email, password, username } = req.body;
+export const getUserById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = req.params.id;
 
-    if (!email || !password || !username) {
-        res.status(400).json({ message: 'Missing required fields' });
-        return;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({
+        code: AuthErrorCode.INVALID_REQUEST,
+        message: "Invalid user ID",
+        error: "invalid_id",
+      });
+      return;
     }
 
-    try {
-        // Check if the user already exists
-        const existingUser = await User.findOne({ email });
+    const user = await User.findById(id)
+      .select("username email favoriteGenres profilePicture")
+      .exec();
 
-        if (existingUser) {
-            // If the user exists, return a conflict error
-            res.status(409).json({ message: 'User already exists. Please login instead.' });
-            return;
-        }
-
-        // Create a new user
-        const user = new User({
-            username,
-            email,
-            password,
-            provider: 'local', // Indicate manual signup
-        });
-
-        await user.save();
-
-        // Generate tokens
-        const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken();
-
-        // Save the refresh token
-        user.refreshTokens.push({
-            token: crypto.createHash('sha256').update(refreshToken).digest('hex'),
-            validUntil: new Date(Date.now() + REFRESH_TOKEN_EXPIRY),
-        });
-
-        await user.save();
-
-        res.status(201).json({
-            message: 'User created successfully',
-            accessToken,
-            refreshToken,
-            user: {
-                id: user._id,
-                email: user.email,
-                username: user.username,
-                profilePicture: user.profilePicture,
-            },
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+    if (!user) {
+      res.status(404).json({
+        code: AuthErrorCode.NO_USER,
+        message: "User not found",
+        error: "user_not_found",
+      });
+      return;
     }
+
+    res.status(200).json({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      profilePicture: user.profilePicture,
+      favoriteGenres: user.favoriteGenres || [],
+    });
+  } catch (error) {
+    res.status(500).json({
+      code: AuthErrorCode.INVALID_REQUEST,
+      message: "Internal server error",
+      error: "server_error",
+    });
+  }
 };
 
-// Get user by ID
-export const getUser = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-        res.status(200).json(user);
-    } catch (error) {
-        if (error instanceof Error) {
-            res.status(400).json({ error: error.message });
-        } else {
-            res.status(400).json({ error: 'An unknown error occurred' });
-        }
+export const getMyProfileDetails = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({
+      code: AuthErrorCode.NO_TOKEN,
+      message: "Access token is missing",
+      error: "missing_token",
+    });
+    return;
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_SECRET as string
+    ) as { id: string };
+
+    const user = await User.findById(decoded.id)
+      .select("username email profilePicture favoriteGenres")
+      .exec();
+
+    if (!user) {
+      res.status(404).json({
+        code: AuthErrorCode.NO_USER,
+        message: "User not found",
+        error: "user_not_found",
+      });
+      return;
     }
+
+    res.status(200).json({
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      profilePicture: user.profilePicture,
+      favoriteGenres: user.favoriteGenres || [],
+    });
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      res.status(401).json({
+        code: AuthErrorCode.TOKEN_EXPIRED,
+        message: "Access token has expired",
+        error: "token_expired",
+      });
+    } else {
+      res.status(401).json({
+        code: AuthErrorCode.INVALID_TOKEN,
+        message: "Invalid access token",
+        error: "invalid_token",
+      });
+    }
+  }
 };
 
-// Update user
-export const updateUser = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-        res.status(200).json({ message: 'User updated successfully', user });
-    } catch (error) {
-        if (error instanceof Error) {
-            res.status(400).json({ error: error.message });
-        } else {
-            res.status(400).json({ error: 'An unknown error occurred' });
-        }
+export const updateUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(400).json({
+        code: AuthErrorCode.INVALID_REQUEST,
+        message: "Invalid user ID",
+        error: "Invalid user ID", // Changed case to match test
+      });
+      return;
     }
+
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!user) {
+      res.status(404).json({
+        code: AuthErrorCode.NO_USER,
+        message: "User not found",
+        error: "user_not_found",
+      });
+      return;
+    }
+
+    res.status(200).json({ message: "User updated successfully", user });
+  } catch (error) {
+    res.status(500).json({
+      code: AuthErrorCode.SERVER_ERROR,
+      message: "Server error",
+      error: "Server error", // Changed case to match test
+    });
+  }
 };
 
-// Delete user
-export const deleteUser = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const user = await User.findByIdAndDelete(req.params.id);
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-        res.status(200).json({ message: 'User deleted successfully' });
-    } catch (error) {
-        if (error instanceof Error) {
-            res.status(400).json({ error: error.message });
-        } else {
-            res.status(400).json({ error: 'An unknown error occurred' });
-        }
+export const deleteUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(400).json({
+        code: AuthErrorCode.INVALID_REQUEST,
+        message: "Invalid user ID",
+        error: "invalid_id", // תוקן מ-"Server error"
+      });
+      return;
     }
+
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      res.status(404).json({
+        code: AuthErrorCode.NO_USER,
+        message: "User not found",
+        error: "user_not_found", // תוקן מ-"Server error"
+      });
+      return;
+    }
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({
+      code: AuthErrorCode.SERVER_ERROR,
+      message: "Server error",
+      error: "Server error",
+    });
+  }
 };
 
-export const getAuthenticatedUser = async (req: Request, res: Response): Promise<void> => {
-    const authHeader = req.headers.authorization;
+export const getAllUsers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const users = await User.find()
+      .select("username email profilePicture favoriteGenres role")
+      .exec();
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        res.status(401).json({ message: 'Access token is required' });
-        return;
-    }
-
-    const accessToken = authHeader.split(' ')[1]; // Extract the access token
-    try {
-        const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET as string) as { id: string };
-        const user = await User.findById(decoded.id).select('-password');
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-
-        res.status(200).json({
-            user: {
-                id: user._id,
-                email: user.email,
-                username: user.username,
-                profilePicture: user.profilePicture,
-            },
-        });
-    } catch (error) {
-        console.error('Access token verification error:', error);
-        res.status(401).json({ message: 'Invalid or expired access token' });
-    }
-};
-
-export const signin = async (req: Request, res: Response): Promise<void> => {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        res.status(400).json({ message: 'Missing email or password' });
-        return;
-    }
-
-    try {
-        const user = await User.findOne({ email });
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-
-        if (!user.verifyPassword(password)) {
-            res.status(401).json({ message: 'Invalid email or password' });
-            return;
-        }
-
-        const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken();
-
-        user.refreshTokens.push({
-            token: crypto.createHash('sha256').update(refreshToken).digest('hex'),
-            validUntil: new Date(Date.now() + REFRESH_TOKEN_EXPIRY),
-        });
-
-        await user.save();
-
-        res.status(200).json({ accessToken, refreshToken });
-    } catch (error) {
-        console.error('Sign-in error:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
-};
-
-export const logout = async (req: Request, res: Response): Promise<void> => {
-    const { refreshToken } = req.body;
-
-    if (!refreshToken) {
-        res.status(400).json({ message: 'Missing refresh token' });
-        return;
-    }
-
-    try {
-        const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
-        const user = await User.findOne({ 'refreshTokens.token': hashedToken });
-
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-
-        user.refreshTokens = user.refreshTokens.filter((t) => t.token !== hashedToken);
-        await user.save();
-
-        res.status(200).json({ message: 'Logged out successfully' });
-    } catch (error) {
-        console.error('Error during logout:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
-};
-
-export const refreshToken = async (req: Request, res: Response): Promise<void> => {
-    const { refreshToken } = req.body;
-
-    if (!refreshToken) {
-        res.status(400).json({ message: 'Refresh token is required' });
-        return;
-    }
-
-    try {
-        const hashedToken = crypto.createHash('sha256').update(refreshToken).digest('hex');
-        const user = await User.findOne({ 'refreshTokens.token': hashedToken });
-
-        if (!user) {
-            res.status(401).json({ message: 'Invalid refresh token' });
-            return;
-        }
-
-        const tokenIndex = user.refreshTokens.findIndex(
-            (t) => t.token === hashedToken && t.validUntil > new Date()
-        );
-
-        if (tokenIndex === -1) {
-            res.status(401).json({ message: 'Refresh token expired or invalid' });
-            return;
-        }
-
-        // Rotate the refresh token
-        const newRefreshToken = generateRefreshToken();
-        user.refreshTokens[tokenIndex] = {
-            token: crypto.createHash('sha256').update(newRefreshToken).digest('hex'),
-            validUntil: new Date(Date.now() + REFRESH_TOKEN_EXPIRY),
-        };
-
-        await user.save();
-
-        // Generate a new access token
-        const accessToken = generateAccessToken(user);
-
-        res.status(200).json({ accessToken, refreshToken: newRefreshToken });
-    } catch (error) {
-        console.error('Error refreshing token:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
+    res.status(200).json({
+      users: users.map((user) => ({
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        profilePicture: user.profilePicture,
+        favoriteGenres: user.favoriteGenres,
+        role: user.role,
+      })),
+    });
+  } catch (error) {
+    res.status(500).json({
+      code: AuthErrorCode.SERVER_ERROR,
+      message: "Server error",
+      error: "server_error",
+    });
+  }
 };
