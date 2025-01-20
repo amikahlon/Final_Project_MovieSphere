@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 const TMDB_API_URL = 'https://api.themoviedb.org/3';
-const TMDB_ACCESS_TOKEN =
-  'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwOTllMjBhZGMxZTQ5ZWJhNjBkZDNkNDk0YTkxMmFiYiIsIm5iZiI6MTczNTU2MDQ3Ni42NzI5OTk5LCJzdWIiOiI2NzcyOGQxYzBmMjQ4ZTg1MDgxMjg5YmEiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.jQl4MnKKTjhOS5qsNg0sAxxRj3RvN9IY2XqXJHZgozA';
+const TMDB_ACCESS_TOKEN = process.env.TMDB_ACCESS_TOKEN;
 
 if (!TMDB_ACCESS_TOKEN) {
   throw new Error('TMDB_ACCESS_TOKEN is not defined in environment variables');
