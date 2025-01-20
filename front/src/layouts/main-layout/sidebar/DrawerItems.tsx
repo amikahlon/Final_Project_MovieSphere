@@ -4,42 +4,20 @@ import List from '@mui/material/List';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import ButtonBase from '@mui/material/ButtonBase';
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import ListItem from './list-items/ListItem';
-import CollapseListItem from './list-items/CollapseListItem';
-import { clearUser } from 'store/slices/userSlice';
-import sitemap from 'routes/sitemap';
+import paths from 'routes/paths';
 import logo from '../../../../public/logo.svg';
-import api from '../../../../api';
 
 const DrawerItems = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', path: paths.dashboard },
+    { id: 'signin', label: 'Sign In', path: paths.signin },
+    { id: 'signup', label: 'Sign Up', path: paths.signup },
+    { id: 'addpost', label: 'Add Post', path: paths.addpost },
+  ];
 
   const handleLogout = async () => {
-    try {
-      // Get the refresh token from localStorage
-      const refreshToken = localStorage.getItem('refreshToken');
-
-      if (refreshToken) {
-        // Call the backend API to invalidate the refresh token
-        await api.post('/users/logout', { refreshToken });
-      }
-
-      // Clear all tokens and user-related data from localStorage
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('accessToken'); // Clear the access token
-
-      // Clear user data from Redux store
-      dispatch(clearUser());
-
-      // Redirect to sign-in page
-      navigate('/auth/signin');
-    } catch (error) {
-      console.error('Logout failed:', error);
-      // Optional: Notify the user about the logout failure
-    }
+    console.log('Logout clicked');
   };
 
   return (
@@ -86,13 +64,9 @@ const DrawerItems = () => {
       </Stack>
 
       <List component="nav" sx={{ mt: 2.5, mb: 10, px: 4.5 }}>
-        {sitemap.map((route) =>
-          route.items ? (
-            <CollapseListItem key={route.id} {...route} />
-          ) : (
-            <ListItem key={route.id} {...route} />
-          ),
-        )}
+        {menuItems.map((route) => (
+          <ListItem key={route.id} {...route} />
+        ))}
       </List>
 
       <Box mt="auto" px={3} pb={6}>

@@ -7,7 +7,7 @@ export interface IRefreshToken {
 }
 
 export interface IUser extends Document {
-  _id: mongoose.Types.ObjectId; // Add this explicit _id type
+  _id: mongoose.Types.ObjectId;
   username: string;
   email: string;
   password?: string | null;

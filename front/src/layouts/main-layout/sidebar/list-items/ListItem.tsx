@@ -1,41 +1,25 @@
-import { MenuItem } from 'routes/sitemap';
 import Link from '@mui/material/Link';
-import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 
-const ListItem = ({ subheader/*, icon*/, path, active }: MenuItem) => {
+interface ListItemProps {
+  label: string;
+  path: string;
+}
+
+const ListItem = ({ label, path }: ListItemProps) => {
   return (
     <ListItemButton
       component={Link}
       href={path}
       sx={{
         mb: 2.5,
-        bgcolor: active ? 'primary.main' : null,
         '&:hover': {
-          bgcolor: active ? 'primary.main' : null,
+          bgcolor: 'primary.light',
         },
       }}
     >
-      <ListItemIcon>
-        {/* {icon && (
-          <IconifyIcon
-            icon={icon}
-            fontSize="h4.fontSize"
-            sx={{
-              color: active ? 'info.light' : null,
-            }}
-          />
-        )} */}
-      </ListItemIcon>
-      <ListItemText
-        primary={subheader}
-        sx={{
-          '& .MuiListItemText-primary': {
-            color: active ? 'info.light' : null,
-          },
-        }}
-      />
+      <ListItemText primary={label} />
     </ListItemButton>
   );
 };

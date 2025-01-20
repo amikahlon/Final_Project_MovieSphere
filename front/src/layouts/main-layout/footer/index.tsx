@@ -17,8 +17,7 @@ const Footer = () => {
       <Link href="https://github.com/amikahlon" target="_blank" rel="noreferrer">
         {'Ami Kahlon'}
       </Link>{' '}
-      And
-      {' '}
+      And{' '}
       <Link href="https://github.com/GuyMishan" target="_blank" rel="noreferrer">
         {'Guy Mishan'}
       </Link>
