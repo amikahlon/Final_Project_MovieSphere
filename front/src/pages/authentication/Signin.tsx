@@ -48,7 +48,7 @@ const Signin = () => {
             alert('Sign in successful');
             navigate('/');
         } catch (error) {
-            console.error('Sign in error:', error);
+            console.log('Sign in error:', error);
             alert('Sign in failed');
         }
     };

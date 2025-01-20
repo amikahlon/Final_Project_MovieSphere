@@ -41,8 +41,8 @@ const Signup = () => {
       alert('Signup successful');
       window.location.href = '/'; // Redirect to homepage
     } catch (error) {
-      console.error('Signup error:', error);
-      alert('Signup failed');
+      console.log('Signup error:', error);
+      alert(error);
     }
   };
 
