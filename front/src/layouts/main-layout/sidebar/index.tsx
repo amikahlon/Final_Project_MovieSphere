@@ -6,11 +6,20 @@ interface SidebarProps {
   mobileOpen: boolean;
   setMobileOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setIsClosing: React.Dispatch<React.SetStateAction<boolean>>;
+  isCollapsed: boolean;
+  setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const drawerWidth = 300;
+const collapsedWidth = 65;
 
-const Sidebar = ({ mobileOpen, setMobileOpen, setIsClosing }: SidebarProps) => {
+const Sidebar = ({
+  mobileOpen,
+  setMobileOpen,
+  setIsClosing,
+  isCollapsed,
+  setIsCollapsed,
+}: SidebarProps) => {
   const handleDrawerClose = () => {
     setIsClosing(true);
     setMobileOpen(false);
@@ -24,7 +33,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen, setIsClosing }: SidebarProps) => {
     <Box
       component="nav"
       sx={{
-        width: { lg: drawerWidth },
+        width: { lg: isCollapsed ? collapsedWidth : drawerWidth },
         flexShrink: { lg: 0 },
       }}
     >
@@ -43,7 +52,7 @@ const Sidebar = ({ mobileOpen, setMobileOpen, setIsClosing }: SidebarProps) => {
           },
         }}
       >
-        <DrawerItems />
+        <DrawerItems isCollapsed={false} onToggleCollapse={() => {}} />
       </Drawer>
 
       {/* Desktop drawer */}
@@ -53,12 +62,16 @@ const Sidebar = ({ mobileOpen, setMobileOpen, setIsClosing }: SidebarProps) => {
           display: { xs: 'none', lg: 'block' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
-            width: drawerWidth,
+            width: isCollapsed ? collapsedWidth : drawerWidth,
+            transition: 'width 0.3s',
           },
         }}
         open
       >
-        <DrawerItems />
+        <DrawerItems
+          isCollapsed={isCollapsed}
+          onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+        />
       </Drawer>
     </Box>
   );

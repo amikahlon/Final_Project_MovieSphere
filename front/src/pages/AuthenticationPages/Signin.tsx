@@ -14,7 +14,7 @@ import { CredentialResponse, GoogleLogin } from '@react-oauth/google';
 import paths from 'routes/paths';
 import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
-import userService from '../../services/user.service';
+import userService from '../../services/auth.service';
 import Cookies from 'js-cookie';
 import { useDispatch } from 'react-redux';
 import { signIn } from 'store/slices/userSlice';
