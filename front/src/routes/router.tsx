@@ -5,6 +5,7 @@ import HomePage from 'pages/HomePage/HomePage';
 import Signin from 'pages/AuthenticationPages/Signin';
 import Signup from 'pages/AuthenticationPages/Signup';
 import AddPost from 'pages/PostsPages/AddPostPage/AddPost';
+import MyProfile from 'pages/userPages/MyProfilePage/MyProfile';
 import App from 'App';
 
 const routes: RouteObject[] = [
@@ -27,6 +28,10 @@ const routes: RouteObject[] = [
           {
             path: '/posts/addpost',
             element: <AddPost />,
+          },
+          {
+            path: '/users/myprofile',
+            element: <MyProfile />,
           },
         ],
       },

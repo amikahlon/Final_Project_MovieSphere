@@ -13,7 +13,7 @@ import Paper from '@mui/material/Paper';
 import { Person, Email, Lock } from '@mui/icons-material';
 import paths from 'routes/paths';
 import { CredentialResponse, GoogleLogin } from '@react-oauth/google';
-import userService from '../../services/user.service';
+import userService from '../../services/auth.service';
 import Cookies from 'js-cookie';
 import { useDispatch } from 'react-redux';
 import { signIn } from 'store/slices/userSlice';

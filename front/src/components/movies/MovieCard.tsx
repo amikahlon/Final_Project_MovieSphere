@@ -2,25 +2,30 @@ import React from 'react';
 import { Typography, Card, CardMedia, CardContent, Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import LocalMoviesIcon from '@mui/icons-material/LocalMovies';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 interface MovieCardProps {
   id: number;
   imageUrl: string;
   title: string;
+  selected?: boolean;
+  onSelect?: (id: number) => void;
 }
 
-const StyledCard = styled(Card)(({ theme }) => ({
-  width: 180, // Reduced width
-  height: 360, // Adjusted height
+const StyledCard = styled(Card)<{ selected?: boolean }>(({ theme, selected }) => ({
+  width: 180,
+  height: 360,
   borderRadius: theme.spacing(2),
   background: 'rgba(255, 255, 255, 0.99)',
   backdropFilter: 'blur(8px)',
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+  boxShadow: selected ? '0 12px 30px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(0, 0, 0, 0.08)',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   position: 'relative',
   overflow: 'hidden',
   cursor: 'pointer',
   border: 'none',
+  outline: selected ? `3px solid ${theme.palette.primary.main}` : 'none',
+  transform: selected ? 'translateY(-8px)' : 'none',
   '&:hover': {
     transform: 'translateY(-8px)',
     boxShadow: '0 12px 30px rgba(0, 0, 0, 0.15)',
@@ -28,12 +33,28 @@ const StyledCard = styled(Card)(({ theme }) => ({
       opacity: 1,
     },
     '& .movie-content': {
-      background: 'rgba(255, 255, 255, 0.99)',
+      background: selected ? `${theme.palette.primary.main}15` : 'rgba(255, 255, 255, 0.99)',
       borderTop: '1px solid rgba(0, 0, 0, 0.05)',
     },
     '& .movie-title': {
-      color: theme.palette.primary.main,
+      color: selected ? theme.palette.primary.main : theme.palette.text.primary,
     },
+  },
+}));
+
+const SelectionBadge = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  top: 10,
+  right: 10,
+  backgroundColor: theme.palette.primary.main,
+  borderRadius: '50%',
+  padding: 2,
+  zIndex: 2,
+  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+  transform: 'scale(1)',
+  transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    transform: 'scale(1.1)',
   },
 }));
 
@@ -62,13 +83,26 @@ const EmptyPoster = styled(Box)(({ theme }) => ({
   color: theme.palette.grey[500],
 }));
 
-const MovieCard: React.FC<MovieCardProps> = ({ id, imageUrl, title }) => {
+const MovieCard: React.FC<MovieCardProps> = ({ id, imageUrl, title, selected, onSelect }) => {
   const handleClick = () => {
-    alert(`Movie ID: ${id}\nTitle: ${title}`);
+    if (onSelect) {
+      onSelect(id);
+    }
   };
 
   return (
-    <StyledCard onClick={handleClick}>
+    <StyledCard onClick={handleClick} selected={selected}>
+      {selected && (
+        <SelectionBadge>
+          <CheckCircleIcon
+            sx={{
+              color: 'white',
+              fontSize: 28,
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+            }}
+          />
+        </SelectionBadge>
+      )}
       {imageUrl ? (
         <CardMedia
           component="img"
@@ -92,9 +126,19 @@ const MovieCard: React.FC<MovieCardProps> = ({ id, imageUrl, title }) => {
             fontSize: '0.9rem',
             letterSpacing: '0.2px',
             textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
           }}
         >
-          Click to select
+          {selected ? (
+            <>
+              <CheckCircleIcon sx={{ fontSize: 20 }} />
+              Movie Selected
+            </>
+          ) : (
+            'Click to select'
+          )}
         </Typography>
       </MovieOverlay>
       <CardContent
