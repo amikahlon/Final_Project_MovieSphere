@@ -14,6 +14,9 @@ app.use(express.json());
 // Enable CORS for כל המקורות (ניתן לצמצם בפרודקשן)
 app.use(cors());
 
+// Serve static files from the "public" directory
+app.use("/public", express.static("public"));
+
 // פונקציה לחיבור ל-MongoDB
 export const connectToDatabase = async (): Promise<void> => {
   try {
