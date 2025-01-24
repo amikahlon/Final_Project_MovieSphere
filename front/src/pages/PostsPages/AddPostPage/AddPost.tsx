@@ -28,6 +28,8 @@ import {
   EmptyRatingBox,
   RatingContainer,
 } from './style';
+import postService from 'services/post.service';
+import { showErrorToast, showSuccessToast } from 'components/toastUtils';
 
 interface Movie {
   id: number;
@@ -108,15 +110,52 @@ const AddPost = () => {
     setSelectedMovieId(id === selectedMovieId ? null : id);
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log({
-      selectedMovieId,
-      searchResults,
-      review,
-      rating,
-      images,
-    });
+  
+    if (!selectedMovieId) {
+      alert('Please select a movie before submitting your review.');
+      return;
+    }
+  
+    try {
+      // Fetch movie details
+      const movieDetails = await movieService.getMovieDetails(selectedMovieId);
+  
+      // Create FormData for submission
+      const formData = new FormData();
+  
+      // Append images to FormData
+      images.forEach((image) => {
+        formData.append('images', image);
+      });
+  
+      // Append other fields to FormData
+      formData.append('title', postTitle);
+      formData.append('review', review);
+      formData.append('rating', (rating ?? 0).toString());
+      formData.append('commentsCount', '0');
+      formData.append('movieId', movieDetails.id.toString());
+      formData.append('movieName', movieDetails.title);
+      formData.append(
+        'moviePosterURL',
+        `https://image.tmdb.org/t/p/w500/${movieDetails.poster_path}`
+      );
+  
+      // Send post to backend
+      /*const response = */ await postService.createPost(formData);
+  
+      // Show success toast
+      showSuccessToast('Post created successfully!');
+  
+    } catch (error) {
+      // Show error toast
+      if (error instanceof Error) {
+        showErrorToast(`Error creating post: ${error.message}`);
+      } else {
+        showErrorToast('An unknown error occurred while creating the post.');
+      }
+    }
   };
 
   const renderMovieGrid = () => {

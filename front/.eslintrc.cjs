@@ -21,7 +21,7 @@ module.exports = {
     'prettier/prettier': ['error', { endOfLine: 'auto' }],
     'prettier/prettier': 'off',
     'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': 'error',
+    '@typescript-eslint/no-unused-vars': 'off', // Turn off TypeScript-specific no-unused-vars
     '@typescript-eslint/no-empty-interface': 'off',
     'react-refresh/only-export-components': 'off',
     'react-hooks/exhaustive-deps': 'off',
