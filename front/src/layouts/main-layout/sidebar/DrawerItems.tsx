@@ -9,8 +9,9 @@ import paths from 'routes/paths';
 import logo from '../../../../public/logo.svg';
 // Import icons
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import LoginIcon from '@mui/icons-material/Login';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import FeedIcon from '@mui/icons-material/Feed';
+// import LoginIcon from '@mui/icons-material/Login';
+// import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
@@ -26,8 +27,9 @@ interface DrawerItemsProps {
 const DrawerItems = ({ isCollapsed, onToggleCollapse }: DrawerItemsProps) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', path: paths.dashboard, icon: <DashboardIcon /> },
-    { id: 'signin', label: 'Sign In', path: paths.signin, icon: <LoginIcon /> },
-    { id: 'signup', label: 'Sign Up', path: paths.signup, icon: <PersonAddIcon /> },
+    { id: 'feed', label: 'Feed', path: paths.feed, icon: <FeedIcon /> },
+    // { id: 'signin', label: 'Sign In', path: paths.signin, icon: <LoginIcon /> },
+    // { id: 'signup', label: 'Sign Up', path: paths.signup, icon: <PersonAddIcon /> },
     { id: 'addpost', label: 'Add Post', path: paths.addpost, icon: <AddBoxIcon /> },
     { id: 'myprofile', label: 'My Profile', path: paths.myprofile, icon: <PersonIcon /> },
   ];

@@ -8,6 +8,7 @@ import AddPost from 'pages/PostsPages/AddPostPage/AddPost';
 import MyProfile from 'pages/userPages/MyProfilePage/MyProfile';
 import PostDetails from 'pages/PostsPages/PostDetailsPage/PostDetails';
 import App from 'App';
+import Feed from 'pages/FeedPage/FeedPage';
 
 const routes: RouteObject[] = [
   {
@@ -31,8 +32,12 @@ const routes: RouteObject[] = [
             element: <AddPost />,
           },
           {
-            path: '/posts/:id',
+            path: '/posts/:postId',
             element: <PostDetails />,
+          },
+          {
+            path: '/feed',
+            element: <Feed />,
           },
           {
             path: '/users/myprofile',

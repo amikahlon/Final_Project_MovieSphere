@@ -1,3 +1,5 @@
+import { User } from "./auth.interfaces";
+
 export interface IPost {
   movieName: string;
   moviePosterURL: string;
@@ -9,4 +11,22 @@ export interface IPost {
   images: File[]; // Array of photo URLs
   likes: string[]; // Array of user IDs who liked the post
   commentsCount: number; // Number of comments
+}
+
+export interface Post {
+  _id: string;
+  movieName: string;
+  moviePosterURL: string;
+  movieId: string;
+  userId: string;
+  user: User;
+  title: string;
+  review: string;
+  rating: number;
+  images: string[];
+  likes: string[];
+  commentsCount: number;
+  createdAt: string;
+  updatedAt: string;
+  hasLiked:boolean;
 }

@@ -11,6 +11,7 @@ import {
   getPopularPosts,
   searchPosts,
   deletePostsByUserId,
+  getPostsInRange,
 } from "../controllers/post";
 import { isAuthenticated } from "../middleware/auth";
 
@@ -18,6 +19,7 @@ const router = express.Router();
 
 router.post("/createPost", isAuthenticated, createPost);
 router.get("/getAllPosts", isAuthenticated, getAllPosts);
+router.get("/range", isAuthenticated, getPostsInRange);
 router.get("/user/:userId", isAuthenticated, getPostsByUserId);
 router.get("/:id", isAuthenticated, getPostById);
 router.put("/:id", isAuthenticated, updatePost);
