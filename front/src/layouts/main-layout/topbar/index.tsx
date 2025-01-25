@@ -109,7 +109,6 @@ interface RootState {
 const Topbar = ({ isClosing, mobileOpen, setMobileOpen }: TopbarProps) => {
   const navigate = useNavigate();
   const userData = useSelector((state: RootState) => state.user.user);
-  console.log(userData);
 
   const handleDrawerToggle = () => {
     if (!isClosing) {

@@ -3,7 +3,7 @@ import { store } from '../store/store';
 import { selectTokens } from '../store/slices/userSlice';
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: `http://localhost:${import.meta.env.VITE_SERVER_PORT}/api`,
   headers: {
     'Content-Type': 'application/json',
   },

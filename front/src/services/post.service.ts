@@ -1,6 +1,6 @@
 import axios from 'axios';
 import axiosInstance from './axios.service';
-import { IPost } from 'interfaces/post.intefaces';
+import { IPost, Post } from 'interfaces/post.intefaces';
 
 const POST_API_URL = '/post';
 
@@ -23,7 +23,7 @@ const createPost = async (postData: FormData): Promise<IPost> => {
 };
 
 // Get all posts
-const getAllPosts = async (): Promise<IPost[]> => {
+const getAllPosts = async (): Promise<Post[]> => {
   try {
     const response = await axiosInstance.get(`${POST_API_URL}/getAllPosts`);
     return response.data;
@@ -37,7 +37,7 @@ const getAllPosts = async (): Promise<IPost[]> => {
 };
 
 // Get posts by user ID
-const getPostsByUserId = async (userId: string): Promise<IPost[]> => {
+const getPostsByUserId = async (userId: string): Promise<Post[]> => {
   try {
     const response = await axiosInstance.get(`${POST_API_URL}/user/${userId}`);
     return response.data;
@@ -51,7 +51,7 @@ const getPostsByUserId = async (userId: string): Promise<IPost[]> => {
 };
 
 // Get a post by ID
-const getPostById = async (postId: string): Promise<IPost> => {
+const getPostById = async (postId: string): Promise<Post> => {
   try {
     const response = await axiosInstance.get(`${POST_API_URL}/${postId}`);
     return response.data;
@@ -65,7 +65,7 @@ const getPostById = async (postId: string): Promise<IPost> => {
 };
 
 // Update a post by ID
-const updatePost = async (postId: string, postData: Partial<IPost>): Promise<IPost> => {
+const updatePost = async (postId: string, postData: Partial<IPost>): Promise<Post> => {
   try {
     const response = await axiosInstance.put(`${POST_API_URL}/${postId}`, postData);
     return response.data;
@@ -92,9 +92,9 @@ const deletePost = async (postId: string): Promise<void> => {
 };
 
 // Like a post
-const likePost = async (postId: string, userId: string): Promise<void> => {
+const likePost = async (postId: string): Promise<void> => {
   try {
-    await axiosInstance.post(`${POST_API_URL}/${postId}/like`, { userId });
+    await axiosInstance.post(`${POST_API_URL}/${postId}/like`);
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const message = error.response?.data?.message || 'Failed to like the post';
@@ -105,9 +105,9 @@ const likePost = async (postId: string, userId: string): Promise<void> => {
 };
 
 // Unlike a post
-const unlikePost = async (postId: string, userId: string): Promise<void> => {
+const unlikePost = async (postId: string): Promise<void> => {
   try {
-    await axiosInstance.post(`${POST_API_URL}/${postId}/unlike`, { userId });
+    await axiosInstance.post(`${POST_API_URL}/${postId}/unlike`);
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const message = error.response?.data?.message || 'Failed to unlike the post';
@@ -118,7 +118,7 @@ const unlikePost = async (postId: string, userId: string): Promise<void> => {
 };
 
 // Get popular posts
-const getPopularPosts = async (): Promise<IPost[]> => {
+const getPopularPosts = async (): Promise<Post[]> => {
   try {
     const response = await axiosInstance.get(`${POST_API_URL}/popular`);
     return response.data;
@@ -132,7 +132,7 @@ const getPopularPosts = async (): Promise<IPost[]> => {
 };
 
 // Search posts by query
-const searchPosts = async (query: string): Promise<IPost[]> => {
+const searchPosts = async (query: string): Promise<Post[]> => {
   try {
     const response = await axiosInstance.get(`${POST_API_URL}/search`, {
       params: { query },
@@ -160,6 +160,22 @@ const deletePostsByUserId = async (userId: string): Promise<void> => {
   }
 };
 
+// Get posts by range (startIndex to endIndex)
+const getPostsInRange = async (startIndex: number, endIndex: number): Promise<{ posts: Post[], totalPosts: number }> => {
+  try {
+    const response = await axiosInstance.get(`${POST_API_URL}/range`, {
+      params: { startIndex, endIndex },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || 'Failed to fetch posts by range';
+      throw new Error(message);
+    }
+    throw new Error('An unknown error occurred');
+  }
+};
+
 // Export all the services
 const postService = {
   createPost,
@@ -173,6 +189,7 @@ const postService = {
   getPopularPosts,
   searchPosts,
   deletePostsByUserId,
+  getPostsInRange
 };
 
 export default postService;

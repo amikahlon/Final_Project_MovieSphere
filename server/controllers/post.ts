@@ -5,6 +5,8 @@ import {
 } from "../middleware/filesupload";
 import fs from 'fs';
 import path from 'path';
+import User from "../models/user";
+import { Types } from 'mongoose';
 
 // Create a new post
 export const createPost = [
@@ -40,13 +42,27 @@ export const createPost = [
 // Get a post by ID
 export const getPostById = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Find the post by ID
     const post = await Post.findById(req.params.id);
+
     if (!post) {
-      res.status(404).json({ message: "Post not found" });
+      res.status(404).json({ message: 'Post not found' });
       return;
     }
-    res.status(200).json(post);
-  } catch (error:any) {
+
+    // Populate the user field
+    const user = await User.findById(post.userId).select('username email profilePicture'); // Select specific fields to include in the response
+
+    // Check if the requesting user has liked the post
+    const userId = new Types.ObjectId(req.user?.id); // Convert req.user.id to ObjectId
+    const hasLiked = post.likes.some((likeId) => likeId.equals(userId)); // Use equals() for ObjectId comparison
+
+    res.status(200).json({
+      ...post.toObject(), // Convert Mongoose document to plain object
+      user, // Add the populated user data
+      hasLiked, // Include the `hasLiked` status
+    });
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
@@ -56,7 +72,7 @@ export const getAllPosts = async (req: Request, res: Response): Promise<void> =>
   try {
     const posts = await Post.find();
     res.status(200).json(posts);
-  } catch (error:any) {
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
@@ -147,7 +163,7 @@ export const getPostsByUserId = async (req: Request, res: Response): Promise<voi
       return;
     }
     res.status(200).json(posts);
-  } catch (error:any) {
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
@@ -156,25 +172,30 @@ export const getPostsByUserId = async (req: Request, res: Response): Promise<voi
 export const likePost = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params; // Post ID
-    const { userId } = req.body; // User ID
+    const userId = req.user?.id; // User ID
 
     const post = await Post.findById(id);
     if (!post) {
       res.status(404).json({ message: "Post not found" });
       return;
     }
+    if (!userId) {
+      res.status(404).json({ message: "user not found" });
+      return;
+    }
+    const userObjectId = new Types.ObjectId(userId); // Convert userId to ObjectId
 
     // Check if the user already liked the post
-    if (post.likes.includes(userId)) {
+    if (post.likes.includes(userObjectId)) {
       res.status(400).json({ message: "You already liked this post" });
       return;
     }
 
-    post.likes.push(userId); // Add the user to the likes array
+    post.likes.push(userObjectId); // Add the user to the likes array
     await post.save();
 
     res.status(200).json({ message: "Post liked successfully", likes: post.likes });
-  } catch (error:any) {
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
@@ -183,16 +204,21 @@ export const likePost = async (req: Request, res: Response): Promise<void> => {
 export const unlikePost = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params; // Post ID
-    const { userId } = req.body; // User ID
+    const userId = req.user?.id; // User ID
 
     const post = await Post.findById(id);
     if (!post) {
       res.status(404).json({ message: "Post not found" });
       return;
     }
+    if (!userId) {
+      res.status(404).json({ message: "user not found" });
+      return;
+    }
+    const userObjectId = new Types.ObjectId(userId); // Convert userId to ObjectId
 
     // Check if the user has liked the post
-    if (!post.likes.includes(userId)) {
+    if (!post.likes.includes(userObjectId)) {
       res.status(400).json({ message: "You haven't liked this post" });
       return;
     }
@@ -201,7 +227,7 @@ export const unlikePost = async (req: Request, res: Response): Promise<void> => 
     await post.save();
 
     res.status(200).json({ message: "Post unliked successfully", likes: post.likes });
-  } catch (error:any) {
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
@@ -211,7 +237,7 @@ export const getPopularPosts = async (_req: Request, res: Response): Promise<voi
   try {
     const posts = await Post.find().sort({ likes: -1 }); // Sort by likes in descending order
     res.status(200).json(posts);
-  } catch (error:any) {
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
@@ -239,7 +265,7 @@ export const searchPosts = async (req: Request, res: Response): Promise<void> =>
     }
 
     res.status(200).json(posts);
-  } catch (error:any) {
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
@@ -262,7 +288,7 @@ export const updateCommentsCount = async (req: Request, res: Response): Promise<
     }
 
     res.status(200).json(post);
-  } catch (error:any) {
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
@@ -295,6 +321,33 @@ export const deletePostsByUserId = async (req: Request, res: Response): Promise<
     res.status(200).json({ message: 'Posts deleted successfully' });
   } catch (error: any) {
     console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getPostsInRange = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const startIndex = parseInt(req.query.startIndex as string, 10) || 0;
+    const endIndex = parseInt(req.query.endIndex as string, 10) || 10;
+
+    // Validate indices
+    if (startIndex < 0 || endIndex <= startIndex) {
+      res.status(400).json({ message: "Invalid range parameters" });
+      return;
+    }
+
+    // Fetch the total number of posts
+    const totalPosts = await Post.countDocuments();
+
+    // Fetch the posts in the given range
+    const posts = await Post.find()
+      .skip(startIndex)
+      .limit(endIndex - startIndex)
+      .sort({ createdAt: -1 }); // Optional: Sort by latest posts
+
+    // Return the posts and total count
+    res.status(200).json({ posts, totalPosts });
+  } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
