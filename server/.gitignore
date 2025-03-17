@@ -76,3 +76,7 @@ cypress/logs/
 yarn-error.log
 package-lock.json
 yarn.lock
+
+client-cert.pem
+client-key.pem
+client.csr

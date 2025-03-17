@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "types": ["node", "jest"],
+    "types": ["node"],
     "target": "ES6",
     "module": "commonjs",
     "outDir": "./dist", 
@@ -9,6 +9,5 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*", "server.ts"],
   "exclude": ["node_modules"]
 }
