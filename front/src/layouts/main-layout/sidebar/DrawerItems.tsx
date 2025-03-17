@@ -36,6 +36,21 @@ const DrawerItems = ({ isCollapsed, onToggleCollapse }: DrawerItemsProps) => {
 
   const handleLogout = async () => {
     console.log('Logout clicked');
+
+    // Clear local storage
+    localStorage.clear();
+
+    // Clear session storage
+    sessionStorage.clear();
+
+    // Clear cookies
+    document.cookie.split(';').forEach((cookie) => {
+      const [name] = cookie.split('=');
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+    });
+
+    // Optionally, redirect to login page
+    window.location.href = paths.signin; // Change this to your login route if necessary
   };
 
   return (
