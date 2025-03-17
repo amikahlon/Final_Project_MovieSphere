@@ -48,5 +48,9 @@ export const connectToDatabase = async (): Promise<void> => {
 // Routes תחת '/api'
 app.use("/api", routes);
 
+app.get("/test", (req, res) => {
+  res.send("Test route is working!");
+});
+
 // ייצוא רק את ה-app כי connectToDatabase כבר מיוצא למעלה
 export { app };
