@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Comment from "../models/comment";
-import Post from "../models/Post";
+import Post from "../models/post";
 import { Types } from "mongoose";
 
 // Create a new comment
