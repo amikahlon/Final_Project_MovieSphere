@@ -43,6 +43,7 @@ interface SearchMoviesResponse {
 
 interface GetPopularMoviesResponse {
   results: Movie[];
+  total_pages: number;
 }
 
 interface GetTopRatedMoviesResponse {

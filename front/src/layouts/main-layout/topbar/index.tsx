@@ -1,13 +1,13 @@
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
-import TextField from '@mui/material/TextField';
+// import TextField from '@mui/material/TextField';
 import ButtonBase from '@mui/material/ButtonBase';
 import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
+// import InputAdornment from '@mui/material/InputAdornment';
 import Avatar from '@mui/material/Avatar';
 import MenuIcon from '@mui/icons-material/Menu';
-import SearchIcon from '@mui/icons-material/Search';
+// import SearchIcon from '@mui/icons-material/Search';
 import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
 import Button from '@mui/material/Button';
@@ -18,6 +18,8 @@ import { alpha, Theme } from '@mui/material/styles';
 import { theme } from 'theme/theme';
 import { Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import MovieSelectionModal from './MovieSelectionModal';
 
 // Add these new styled components
 const pulse = keyframes`
@@ -110,6 +112,11 @@ const Topbar = ({ isClosing, mobileOpen, setMobileOpen }: TopbarProps) => {
   const navigate = useNavigate();
   const userData = useSelector((state: RootState) => state.user.user);
 
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const handleOpenModal = () => setModalOpen(true);
+  const handleCloseModal = () => setModalOpen(false);
+
   const handleDrawerToggle = () => {
     if (!isClosing) {
       setMobileOpen(!mobileOpen);
@@ -121,46 +128,48 @@ const Topbar = ({ isClosing, mobileOpen, setMobileOpen }: TopbarProps) => {
   };
 
   return (
-    <Stack
-      py={2}
-      px={2}
-      alignItems="center"
-      justifyContent="space-between"
-      bgcolor="transparent"
-      zIndex={1200}
-      direction="row"
-      sx={{
-        width: '100%',
-        boxSizing: 'border-box',
-      }}
-    >
-      <Stack spacing={{ xs: 2, sm: 3 }} alignItems="center" direction="row">
-        <ButtonBase
-          component={Link}
-          href="/"
-          disableRipple
-          sx={{ lineHeight: 0, display: { xs: 'none', sm: 'block', lg: 'none' } }}
-        ></ButtonBase>
+    <>
+      <MovieSelectionModal open={modalOpen} onClose={handleCloseModal} />
+      <Stack
+        py={2}
+        px={2}
+        alignItems="center"
+        justifyContent="space-between"
+        bgcolor="transparent"
+        zIndex={1200}
+        direction="row"
+        sx={{
+          width: '100%',
+          boxSizing: 'border-box',
+        }}
+      >
+        <Stack spacing={{ xs: 2, sm: 3 }} alignItems="center" direction="row">
+          <ButtonBase
+            component={Link}
+            href="/"
+            disableRipple
+            sx={{ lineHeight: 0, display: { xs: 'none', sm: 'block', lg: 'none' } }}
+          ></ButtonBase>
 
-        <Toolbar sx={{ display: { xs: 'block', lg: 'none' } }}>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            onClick={handleDrawerToggle}
-          >
-            <MenuIcon />
-          </IconButton>
-        </Toolbar>
-
+          <Toolbar sx={{ display: { xs: 'block', lg: 'none' } }}>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              onClick={handleDrawerToggle}
+            >
+              <MenuIcon />
+            </IconButton>
+          </Toolbar>
+          {/* 
         <Toolbar sx={{ ml: -1.5, display: { xs: 'block', md: 'none' } }}>
           <IconButton size="large" edge="start" color="inherit" aria-label="search">
             <SearchIcon />
           </IconButton>
-        </Toolbar>
+        </Toolbar> */}
 
-        <TextField
+          {/* <TextField
           variant="filled"
           placeholder="Search"
           sx={{ width: { xs: '100%', md: 340 }, display: { xs: 'none', md: 'flex' } }}
@@ -171,63 +180,63 @@ const Topbar = ({ isClosing, mobileOpen, setMobileOpen }: TopbarProps) => {
               </InputAdornment>
             ),
           }}
-        />
-      </Stack>
+        /> */}
+        </Stack>
 
-      <Stack direction="row" spacing={{ xs: 1, sm: 2 }} alignItems="center">
-        <GenreButton
-          startIcon={<MobileGenreIcon />}
-          onClick={() => {}}
-          sx={{
-            display: 'flex',
-            fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
-          }}
-        >
-          <Box sx={{ display: { xs: 'none', sm: 'block' } }}>Choose your favorite genres</Box>
-          <Box sx={{ display: { xs: 'block', sm: 'none' } }}>Genres</Box>
-        </GenreButton>
-
-        <WelcomeContainer
-          direction="row"
-          spacing={{ xs: 1, sm: 1.5 }}
-          alignItems="center"
-          theme={theme}
-          onClick={handleProfileClick}
-          sx={{
-            '&:hover': {
-              '& .MuiAvatar-root': {
-                transform: 'scale(1.05)',
-                transition: 'transform 0.2s ease-in-out',
-              },
-            },
-          }}
-        >
-          <Avatar
+        <Stack direction="row" spacing={{ xs: 1, sm: 2 }} alignItems="center">
+          <GenreButton
+            startIcon={<MobileGenreIcon />}
+            onClick={handleOpenModal}
             sx={{
-              width: { xs: 28, sm: 32 },
-              height: { xs: 28, sm: 32 },
-              bgcolor: 'primary.main',
               display: 'flex',
-              border: '2px solid white',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-            }}
-            src={userData?.profilePicture || ''}
-          >
-            {userData ? userData.username.charAt(0).toUpperCase() : 'G'}
-          </Avatar>
-          <WelcomeText
-            variant="subtitle1"
-            sx={{
-              display: 'block',
               fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
             }}
           >
-            {userData ? `${userData.username}` : 'Guest'}
-          </WelcomeText>
-        </WelcomeContainer>
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>AI Movie Recommendation</Box>
+          </GenreButton>
+
+          <WelcomeContainer
+            direction="row"
+            spacing={{ xs: 1, sm: 1.5 }}
+            alignItems="center"
+            theme={theme}
+            onClick={handleProfileClick}
+            sx={{
+              '&:hover': {
+                '& .MuiAvatar-root': {
+                  transform: 'scale(1.05)',
+                  transition: 'transform 0.2s ease-in-out',
+                },
+              },
+            }}
+          >
+            <Avatar
+              sx={{
+                width: { xs: 28, sm: 32 },
+                height: { xs: 28, sm: 32 },
+                bgcolor: 'primary.main',
+                display: 'flex',
+                border: '2px solid white',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+              }}
+              src={userData?.profilePicture || ''}
+            >
+              {userData ? userData.username.charAt(0).toUpperCase() : 'G'}
+            </Avatar>
+            <WelcomeText
+              variant="subtitle1"
+              sx={{
+                display: 'block',
+                fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
+              }}
+            >
+              {userData ? `${userData.username}` : 'Guest'}
+            </WelcomeText>
+          </WelcomeContainer>
+        </Stack>
       </Stack>
-    </Stack>
+    </>
   );
 };
 
