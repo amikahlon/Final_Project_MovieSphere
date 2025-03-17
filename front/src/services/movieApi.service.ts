@@ -42,15 +42,20 @@ const getMovieDetails = async (movieId: number): Promise<GetMovieDetailsResponse
   }
 };
 
-const getPopularMovies = async (): Promise<Movie[]> => {
+const getPopularMovies = async (page: number = 1): Promise<{ results: Movie[]; total_pages: number }> => {
   try {
     const response = await axios.get<GetPopularMoviesResponse>(`${TMDB_API_URL}/movie/popular`, {
+      params: { page }, // Add page parameter
       headers: {
         Authorization: `Bearer ${TMDB_ACCESS_TOKEN}`,
         Accept: 'application/json',
       },
     });
-    return response.data.results;
+
+    return {
+      results: response.data.results,
+      total_pages: response.data.total_pages, // Return total pages for pagination
+    };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new Error(error.response.data.status_message || 'Failed to fetch popular movies');
