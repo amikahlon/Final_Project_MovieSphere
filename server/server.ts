@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import routes from "./routes/index";
 import cors from "cors";
+import path from "path";
 
 dotenv.config();
 
@@ -48,8 +49,27 @@ export const connectToDatabase = async (): Promise<void> => {
 // Routes תחת '/api'
 app.use("/api", routes);
 
-app.get("/test", (req, res) => {
-  res.send("Test route is working!");
+// ✅ Serve React Vite build directly from `front/`
+app.use(express.static(path.join(__dirname, "../front")));
+
+app.get("*", (req, res, next) => {
+  // 🔹 If the request is for an API route, let Express handle it
+  if (req.originalUrl.startsWith("/api")) {
+    return next();
+  }
+
+  // 🔹 If the request is for a static file (e.g., CSS, JS), let Express serve it
+  if (req.originalUrl.includes(".")) {
+    return next();
+  }
+
+  // 🔹 Serve index.html for all other routes (let React handle routing)
+  res.sendFile(path.resolve(__dirname, "../front/index.html"), (err) => {
+    if (err) {
+      console.error("Error serving index.html:", err);
+      res.status(500).send("Internal Server Error");
+    }
+  });
 });
 
 // ייצוא רק את ה-app כי connectToDatabase כבר מיוצא למעלה

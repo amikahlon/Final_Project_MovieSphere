@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { SignInResponse, SignUpResponse, LogoutResponse } from '../interfaces/auth.interfaces';
 
-const API_URL = 'http://localhost:8000/api/users';
+const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/users`;
 
 const signup = async (userData: {
   email: string;
