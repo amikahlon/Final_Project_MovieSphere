@@ -1,102 +1,376 @@
-import React, { useCallback, useState, useRef } from 'react';
-import { FixedSizeList as List } from 'react-window';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
+import {
+  Box,
+  Typography,
+  Container,
+  Slider,
+  Button,
+  Paper,
+  Stack,
+  Tooltip,
+  CircularProgress,
+  Grid,
+} from '@mui/material';
 import PostDetails from 'components/PostDetails';
 import postService from 'services/post.service';
+import RateReviewIcon from '@mui/icons-material/RateReview';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import StarIcon from '@mui/icons-material/Star';
 
 // Memoized version of PostDetails to avoid unnecessary rerenders
 const MemoizedPostDetails = React.memo(PostDetails);
 
+const marks = [
+  { value: 0, label: '0' },
+  { value: 2, label: '2' },
+  { value: 4, label: '4' },
+  { value: 6, label: '6' },
+  { value: 8, label: '8' },
+  { value: 10, label: '10' },
+];
+
 const Feed: React.FC = () => {
-  const [postIds, setPostIds] = useState<Map<number, string>>(new Map()); // Use Map to hold index-postId pairs
-  const [totalPosts, setTotalPosts] = useState<number | null>(null); // Total number of posts
+  const [posts, setPosts] = useState<string[]>([]);
+  const [totalPosts, setTotalPosts] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fetchedRanges = useRef<Set<string>>(new Set()); // Track fetched ranges to avoid redundant calls
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const loaderRef = useRef<HTMLDivElement>(null);
+  const PAGE_SIZE = 5; // Number of posts to load per batch
 
-  // Fetch posts based on startIndex and endIndex
-  const fetchPostsInRange = useCallback(async (startIndex: number, endIndex: number) => {
-    const rangeKey = `${startIndex}-${endIndex}`;
+  // Rating filter state
+  const [ratingRange, setRatingRange] = useState<[number, number]>([0, 10]);
+  const [activeFilter, setActiveFilter] = useState(false);
+  const [filterApplied, setFilterApplied] = useState(false);
+  const [noResults, setNoResults] = useState(false);
 
-    if (fetchedRanges.current.has(rangeKey)) return;
-    fetchedRanges.current.add(rangeKey);
+  // Clear posts when filter changes
+  useEffect(() => {
+    if (filterApplied) {
+      setPosts([]);
+      setPage(0);
+      setHasMore(true);
+    }
+  }, [filterApplied]);
+
+  // Fetch posts based on page with optional rating filter
+  const fetchPosts = useCallback(async () => {
+    if (loading || !hasMore) return;
 
     try {
       setLoading(true);
-      const response = await postService.getPostsInRange(startIndex, endIndex); // API for paginated posts
-      const { posts, totalPosts } = response;
+      setNoResults(false);
 
-      // Use Map to avoid rerendering unchanged rows
-      setPostIds((prev) => {
-        const newMap = new Map(prev);
-        posts.forEach((post, index) => {
-          newMap.set(startIndex + index, post._id);
-        });
-        return newMap;
-      });
+      const startIndex = page * PAGE_SIZE;
+      const endIndex = startIndex + PAGE_SIZE - 1;
 
-      setTotalPosts(totalPosts); // Set the total number of posts
+      let response;
+
+      // Use the appropriate service method based on whether filter is applied
+      if (filterApplied) {
+        response = await postService.getPostsByRatingRange(
+          ratingRange[0],
+          ratingRange[1],
+          startIndex,
+          endIndex,
+        );
+      } else {
+        response = await postService.getPostsInRange(startIndex, endIndex);
+      }
+
+      const { posts: newPosts, totalPosts } = response;
+
+      // Check if we have zero posts with filter applied
+      if (filterApplied && page === 0 && newPosts.length === 0) {
+        setNoResults(true);
+      }
+
+      // Update posts
+      setPosts((prevPosts) => [...prevPosts, ...newPosts.map((post) => post._id)]);
+
+      setTotalPosts(totalPosts);
+
+      // Check if we have more posts to load
+      if (newPosts.length < PAGE_SIZE || startIndex + newPosts.length >= totalPosts) {
+        setHasMore(false);
+      } else {
+        setPage((prevPage) => prevPage + 1);
+      }
     } catch (err) {
       setError('Failed to load posts.');
     } finally {
       setLoading(false);
     }
+  }, [page, ratingRange, filterApplied, loading, hasMore]);
+
+  // Infinite scrolling with Intersection Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && hasMore && !loading) {
+          fetchPosts();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    const currentLoader = loaderRef.current;
+    if (currentLoader) {
+      observer.observe(currentLoader);
+    }
+
+    return () => {
+      if (currentLoader) {
+        observer.unobserve(currentLoader);
+      }
+    };
+  }, [fetchPosts, hasMore, loading]);
+
+  // Initial load
+  useEffect(() => {
+    fetchPosts();
   }, []);
 
-  // Fetch visible posts dynamically based on the range
-  const handleItemsRendered = useCallback(
-    ({ overscanStartIndex, overscanStopIndex }: { overscanStartIndex: number; overscanStopIndex: number }) => {
-      // Add a buffer to overscan range
-      const buffer = 1; // at-least 1
-      const startIndex = Math.max(0, overscanStartIndex - buffer);
-      const endIndex = overscanStopIndex + buffer;
-
-      // Fetch posts for the range if not already fetched
-      fetchPostsInRange(startIndex, endIndex);
-    },
-    [fetchPostsInRange]
-  );
-
-  // Virtualized list row renderer
-  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const postId = postIds.get(index);
-
-    return (
-      <div
-        style={{
-          ...style,
-          marginBottom: '20px',
-          backgroundColor: postId ? 'transparent' : 'white', // Black background for placeholders
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          transition: 'background-color 0.2s ease-in-out', // Smooth transition
-        }}
-      >
-        {postId ? (
-          <MemoizedPostDetails postId={postId} />
-        ) : (
-          <div style={{ color: 'white', fontSize: '16px', animation: 'fade-in 0.2s' }}>Placeholder Row</div>
-        )}
-      </div>
-    );
+  // Handle rating slider change
+  const handleRatingChange = (_event: Event, newValue: number | number[]) => {
+    setRatingRange(newValue as [number, number]);
+    setActiveFilter(true);
   };
 
-  if (loading && postIds.size === 0) return <div>Loading posts...</div>;
-  if (error) return <div>Error: {error}</div>;
+  // Apply filter
+  const applyFilter = () => {
+    setPosts([]);
+    setPage(0);
+    setHasMore(true);
+    setFilterApplied(true);
+    fetchPosts();
+  };
+
+  // Reset filter
+  const resetFilter = () => {
+    window.location.reload();
+  };
 
   return (
-    <List
-      height={window.innerHeight} // Adjust to screen height
-      itemCount={totalPosts || 1000} // Use totalPosts for accurate count
-      itemSize={650} // Adjust this if necessary for row height
-      width="100%"
-      overscanCount={5} // Adds 5 extra rows above and below the visible area
-      onItemsRendered={handleItemsRendered}
-    >
-      {({ index, style }) => (
-        <Row key={`row-${index}`} index={index} style={style} />
-      )}
-    </List>
+    <>
+      <Container maxWidth="lg">
+        {' '}
+        {/* Changed from md to lg to match MyReviews */}
+        <Box sx={{ mb: 3, textAlign: 'center' }}>
+          {' '}
+          {/* Reduced margin bottom */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: 2,
+              backgroundColor: 'rgba(255, 255, 255, 0.94)',
+              borderRadius: '12px',
+              padding: '12px', // Reduced padding
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)',
+            }}
+          >
+            <RateReviewIcon sx={{ fontSize: 30, mr: 1, color: 'primary.main', opacity: 0.9 }} />{' '}
+            {/* Smaller icon */}
+            <Typography variant="h4" fontWeight="500" color="text.primary">
+              All Reviews
+            </Typography>
+          </Box>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              mb: 2,
+              borderRadius: '10px',
+              background: 'linear-gradient(to right, #f5f7fa, #c3cfe2)',
+              transition: 'all 0.3s ease',
+              maxWidth: '600px',
+              margin: '0 auto',
+            }}
+          >
+            <Stack spacing={2}>
+              {' '}
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <FilterAltIcon sx={{ mr: 1, color: 'primary.main', fontSize: '1.2rem' }} />{' '}
+                <Typography variant="subtitle1" fontWeight="500">
+                  {' '}
+                  Filter by Rating
+                </Typography>
+              </Box>
+              <Box sx={{ px: 1, width: '100%' }}>
+                {' '}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                  {' '}
+                  <StarIcon sx={{ color: 'gold', mr: 1, fontSize: '1rem' }} />
+                  <Typography variant="body2" fontWeight="500">
+                    {' '}
+                    Rating Range: {ratingRange[0]} - {ratingRange[1]}
+                  </Typography>
+                </Box>
+                <Tooltip title="Select your preferred rating range" arrow>
+                  <Slider
+                    value={ratingRange}
+                    onChange={handleRatingChange}
+                    valueLabelDisplay="auto"
+                    marks={marks}
+                    min={0}
+                    max={10}
+                    step={1}
+                    sx={{
+                      color: 'primary.main',
+                      '& .MuiSlider-thumb': {
+                        height: 20,
+                        width: 20,
+                        backgroundColor: '#fff',
+                        border: '2px solid currentColor',
+                        '&:focus, &:hover, &.Mui-active, &.Mui-focusVisible': {
+                          boxShadow: '0 0 0 6px rgba(63, 81, 181, 0.16)',
+                        },
+                      },
+                      '& .MuiSlider-markLabel': {
+                        fontSize: '0.75rem',
+                      },
+                    }}
+                  />
+                </Tooltip>
+              </Box>
+              <Stack direction="row" spacing={1} justifyContent="center">
+                {' '}
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={!activeFilter}
+                  onClick={applyFilter}
+                  size="small"
+                  sx={{
+                    px: 2,
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 4px rgba(50, 50, 93, 0.11)',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 8px rgba(50, 50, 93, 0.1)',
+                    },
+                  }}
+                >
+                  Apply Filter
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={resetFilter}
+                  disabled={!filterApplied}
+                  size="small"
+                  sx={{
+                    px: 2,
+                    fontWeight: 'bold',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                    },
+                  }}
+                >
+                  Reset
+                </Button>
+              </Stack>
+            </Stack>
+          </Paper>
+          {filterApplied && (
+            <Paper
+              sx={{
+                p: 1,
+                mb: 2,
+                backgroundColor: 'primary.light',
+                color: 'white',
+                borderRadius: '8px',
+              }}
+            >
+              <Typography variant="body2">
+                Showing posts with ratings between {ratingRange[0]} and {ratingRange[1]}
+                {totalPosts !== null && ` (${totalPosts} posts found)`}
+              </Typography>
+            </Paper>
+          )}
+        </Box>
+        {filterApplied && noResults && (
+          <Paper
+            elevation={3}
+            sx={{
+              p: 3,
+              mb: 3,
+              mt: 2,
+              borderRadius: '12px',
+              backgroundColor: 'info.light',
+              color: 'white',
+              textAlign: 'center',
+            }}
+          >
+            <Typography variant="h6">
+              No posts found with ratings between {ratingRange[0]} and {ratingRange[1]}
+            </Typography>
+            <Typography variant="body1" sx={{ mt: 1 }}>
+              Try adjusting your filter criteria or reset the filter to see all posts.
+            </Typography>
+          </Paper>
+        )}
+      </Container>
+
+      <Container maxWidth="lg">
+        {' '}
+        {loading && posts.length === 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Box sx={{ textAlign: 'center', py: 5 }}>
+            <Typography color="error">{error}</Typography>
+          </Box>
+        ) : noResults ? null : (
+          <>
+            <Grid container spacing={4}>
+              {' '}
+              {posts.map((postId, index) => (
+                <Grid item xs={12} key={`post-${postId}-${index}`}>
+                  <Box position="relative">
+                    <MemoizedPostDetails postId={postId} />
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+
+            <Box
+              ref={loaderRef}
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                py: 4,
+                visibility: hasMore ? 'visible' : 'hidden',
+              }}
+            >
+              {loading && <CircularProgress size={30} />}
+            </Box>
+
+            {/* End of list message */}
+            {!hasMore && posts.length > 0 && (
+              <Box sx={{ textAlign: 'center', py: 3, mb: 4 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    display: 'inline-block',
+                    backgroundColor: 'rgba(0,0,0,0.03)',
+                    borderRadius: 2,
+                  }}
+                ></Paper>
+              </Box>
+            )}
+          </>
+        )}
+      </Container>
+    </>
   );
 };
 

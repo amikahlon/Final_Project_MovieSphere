@@ -6,13 +6,14 @@ import { generateAccessToken, generateRefreshToken } from "../middleware/auth";
 import { REFRESH_TOKEN_EXPIRY } from "../config/constants";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import { uploadImages } from "../middleware/filesupload";
 
 //Sign up a new user
 export const createUser = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { email, password, username, favoriteGenres } = req.body; // Add favoriteGenres to destructuring
+  const { email, password, username, favoriteGenres, profileUrl } = req.body; // Added profileUrl
 
   if (!email || !password || !username) {
     res.status(400).json({ message: "Missing required fields" });
@@ -35,6 +36,7 @@ export const createUser = async (
       password,
       provider: "local",
       favoriteGenres: favoriteGenres || [], // Initialize favoriteGenres
+      profilePicture: profileUrl || "", // Set profilePicture if profileUrl is provided
     });
 
     await user.save();
@@ -58,9 +60,9 @@ export const createUser = async (
         id: user._id,
         email: user.email,
         username: user.username,
-        profilePicture: user.profilePicture || "", // וודא שנשלח גם אם ריק
-        role: user.role, // הוספת הרול
-        favoriteGenres: user.favoriteGenres, // Add favoriteGenres to response
+        profilePicture: user.profilePicture || "", // Make sure it's sent even if empty
+        role: user.role,
+        favoriteGenres: user.favoriteGenres,
       },
     });
   } catch (error) {
@@ -268,5 +270,178 @@ export const getAllUsers = async (
       message: "Server error",
       error: "server_error",
     });
+  }
+};
+
+export const updateUsername = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({
+      code: AuthErrorCode.NO_TOKEN,
+      message: "Access token is missing",
+      error: "missing_token",
+    });
+    return;
+  }
+
+  const token = authHeader.split(" ")[1];
+  const { username } = req.body;
+
+  if (!username) {
+    res.status(400).json({
+      code: AuthErrorCode.INVALID_REQUEST,
+      message: "Username is required",
+      error: "missing_username",
+    });
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_SECRET as string
+    ) as { id: string };
+
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      res.status(404).json({
+        code: AuthErrorCode.NO_USER,
+        message: "User not found",
+        error: "user_not_found",
+      });
+      return;
+    }
+
+    user.username = username;
+    await user.save();
+
+    res.status(200).json({
+      message: "Username updated successfully",
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        profilePicture: user.profilePicture,
+        favoriteGenres: user.favoriteGenres || [],
+      },
+    });
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      res.status(401).json({
+        code: AuthErrorCode.TOKEN_EXPIRED,
+        message: "Access token has expired",
+        error: "token_expired",
+      });
+    } else {
+      res.status(401).json({
+        code: AuthErrorCode.INVALID_TOKEN,
+        message: "Invalid access token",
+        error: "invalid_token",
+      });
+    }
+  }
+};
+
+// Handle profile image uploads
+export const uploadProfileImage = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ message: "No image file provided" });
+      return;
+    }
+
+    // Create public URL for the uploaded file
+    const imageUrl = `/public/images/${req.file.filename}`;
+
+    res.status(200).json({
+      message: "Profile image uploaded successfully",
+      imageUrl,
+    });
+  } catch (error) {
+    console.error("Error uploading profile image:", error);
+    res.status(500).json({ message: "Server error during image upload" });
+  }
+};
+
+// Update user's profile picture
+export const updateProfilePicture = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({
+      code: AuthErrorCode.NO_TOKEN,
+      message: "Access token is missing",
+      error: "missing_token",
+    });
+    return;
+  }
+
+  const token = authHeader.split(" ")[1];
+  const { profilePicture } = req.body;
+
+  if (!profilePicture) {
+    res.status(400).json({
+      code: AuthErrorCode.INVALID_REQUEST,
+      message: "Profile picture URL is required",
+      error: "missing_profile_picture",
+    });
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_SECRET as string
+    ) as { id: string };
+
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      res.status(404).json({
+        code: AuthErrorCode.NO_USER,
+        message: "User not found",
+        error: "user_not_found",
+      });
+      return;
+    }
+
+    user.profilePicture = profilePicture;
+    await user.save();
+
+    res.status(200).json({
+      message: "Profile picture updated successfully",
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        profilePicture: user.profilePicture,
+        favoriteGenres: user.favoriteGenres || [],
+      },
+    });
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      res.status(401).json({
+        code: AuthErrorCode.TOKEN_EXPIRED,
+        message: "Access token has expired",
+        error: "token_expired",
+      });
+    } else {
+      res.status(401).json({
+        code: AuthErrorCode.INVALID_TOKEN,
+        message: "Invalid access token",
+        error: "invalid_token",
+      });
+    }
   }
 };

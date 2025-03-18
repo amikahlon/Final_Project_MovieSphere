@@ -149,6 +149,15 @@ const PostDetails: React.FC<PostDetailsProps> = ({ postId }) => {
     return '😕 Average';
   };
 
+  // Helper function to get the complete profile picture URL
+  const getProfilePictureUrl = (path: string | undefined) => {
+    // Check if path exists and is a relative path
+    if (path && !path.startsWith('http')) {
+      return `http://localhost:${import.meta.env.VITE_SERVER_PORT}${path}`;
+    }
+    return path || '/placeholder-avatar.png'; // Fallback to placeholder if no image
+  };
+
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
@@ -258,7 +267,8 @@ const PostDetails: React.FC<PostDetailsProps> = ({ postId }) => {
             }}
           >
             <Avatar
-              src="/placeholder-avatar.png" // Replace with user avatar if available
+              src={getProfilePictureUrl(post.user.profilePicture)}
+              alt={post.user.username}
               sx={{
                 width: 80,
                 height: 80,
@@ -438,7 +448,10 @@ const PostDetails: React.FC<PostDetailsProps> = ({ postId }) => {
                     key={comment._id}
                     sx={{ p: 2, mt: 2, display: 'flex', alignItems: 'center' }}
                   >
-                    <Avatar src={comment.userId.profilePicture || '/placeholder-avatar.png'} />
+                    <Avatar
+                      src={getProfilePictureUrl(comment.userId.profilePicture)}
+                      alt={comment.userId.username}
+                    />
                     <Box sx={{ ml: 2, flexGrow: 1 }}>
                       <Typography fontWeight="bold">{comment.userId.username}</Typography>
                       <Typography variant="caption" sx={{ color: 'gray', ml: 1 }}>

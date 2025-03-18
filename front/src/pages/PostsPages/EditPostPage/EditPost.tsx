@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -14,10 +14,12 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
-import MovieIcon from '@mui/icons-material/Movie';
 import SearchOffIcon from '@mui/icons-material/SearchOff';
+import EditIcon from '@mui/icons-material/Edit';
 import movieService from '../../../services/movieApi.service';
+import postService from 'services/post.service';
 import MovieCard from '../../../components/movies/MovieCard';
+import { showErrorToast, showSuccessToast } from 'components/toastUtils';
 import {
   ImagePreview,
   FormSection,
@@ -28,9 +30,7 @@ import {
   ImagePreviewContainer,
   EmptyRatingBox,
   RatingContainer,
-} from './style';
-import postService from 'services/post.service';
-import { showErrorToast, showSuccessToast } from 'components/toastUtils';
+} from '../AddPostPage/style';
 
 interface Movie {
   id: number;
@@ -38,22 +38,92 @@ interface Movie {
   poster_path: string | null;
 }
 
+interface ExistingImage {
+  url: string;
+  isExisting: true;
+  originalUrl: string;
+}
+
+interface NewImage {
+  url: string;
+  isExisting: false;
+  file: File;
+}
+
+type ImageItem = ExistingImage | NewImage;
+
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
-const AddPost = () => {
+const EditPost = () => {
   const navigate = useNavigate();
+  const { postId } = useParams<{ postId: string }>();
+
+  // State variables for post data
+  const [postTitle, setPostTitle] = useState<string>('');
+  const [review, setReview] = useState<string>('');
+  const [rating, setRating] = useState<number | null>(0);
+  const [images, setImages] = useState<ImageItem[]>([]);
+  const [originalMovieId, setOriginalMovieId] = useState<number | null>(null);
+  const [movieName, setMovieName] = useState<string>('');
+
+  // State variables for search functionality
   const [movieQuery, setMovieQuery] = useState<string>('');
   const [lastSearchedQuery, setLastSearchedQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
-  const [review, setReview] = useState<string>('');
-  const [rating, setRating] = useState<number | null>(0);
-  const [images, setImages] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [fetchingPost, setFetchingPost] = useState<boolean>(true);
   const [selectedMovieId, setSelectedMovieId] = useState<number | null>(null);
-  const [postTitle, setPostTitle] = useState<string>('');
+  const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
 
+  // Fetch post data when component mounts
+  useEffect(() => {
+    const fetchPost = async () => {
+      if (!postId) return;
+
+      try {
+        setFetchingPost(true);
+        const post = await postService.getPostById(postId);
+
+        // Set post data
+        setPostTitle(post.title);
+        setReview(post.review);
+        setRating(post.rating);
+        setOriginalMovieId(parseInt(post.movieId));
+        setSelectedMovieId(parseInt(post.movieId));
+        setMovieName(post.movieName);
+
+        // Convert existing images to ImageItem format
+        const existingImages: ImageItem[] = post.images.map((imageUrl) => {
+          // Use the same image URL format as in PostDetails component
+          const fullUrl = imageUrl.startsWith('http')
+            ? imageUrl
+            : `http://localhost:${import.meta.env.VITE_SERVER_PORT}${imageUrl}`;
+
+          return {
+            url: fullUrl,
+            isExisting: true,
+            originalUrl: imageUrl,
+          };
+        });
+
+        setImages(existingImages);
+      } catch (error) {
+        if (error instanceof Error) {
+          showErrorToast(`Error loading post: ${error.message}`);
+        } else {
+          showErrorToast('An unknown error occurred while loading the post.');
+        }
+        navigate('/my-reviews');
+      } finally {
+        setFetchingPost(false);
+      }
+    };
+
+    fetchPost();
+  }, [postId, navigate]);
+
+  // Handle click on image upload area
   const handleImageUploadClick = () => {
     const fileInput = document.getElementById('image-upload-input') as HTMLInputElement;
     if (fileInput) {
@@ -61,27 +131,42 @@ const AddPost = () => {
     }
   };
 
+  // Handle image upload
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     if (files.length === 0) return;
 
     if (images.length + files.length > 3) {
-      alert('Maximum 3 images allowed');
+      showErrorToast('Maximum 3 images allowed');
       return;
     }
 
-    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
-    setImages((prev) => [...prev, ...files]);
+    const newImages: ImageItem[] = files.map((file) => ({
+      url: URL.createObjectURL(file),
+      isExisting: false,
+      file,
+    }));
+
+    setImages((prev) => [...prev, ...newImages]);
     event.target.value = '';
   };
 
+  // Handle image removal
   const handleRemoveImage = (index: number) => {
-    URL.revokeObjectURL(previewUrls[index]);
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    const imageToRemove = images[index];
+
+    if (imageToRemove.isExisting) {
+      // Mark existing images for deletion on the server
+      setImagesToDelete((prev) => [...prev, (imageToRemove as ExistingImage).originalUrl]);
+    } else {
+      // Revoke object URL for new images
+      URL.revokeObjectURL(imageToRemove.url);
+    }
+
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Handle movie search
   const handleSearchMovie = async () => {
     setHasSearched(true);
     setLastSearchedQuery(movieQuery.trim());
@@ -99,69 +184,105 @@ const AddPost = () => {
     } catch (error) {
       setSearchResults([]);
       if (error instanceof Error) {
-        alert(`Error searching for movies: ${error.message}`);
+        showErrorToast(`Error searching for movies: ${error.message}`);
       } else {
-        alert('An unknown error occurred while searching for movies.');
+        showErrorToast('An unknown error occurred while searching for movies.');
       }
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Handle movie selection
   const handleMovieSelect = (id: number) => {
     setSelectedMovieId(id === selectedMovieId ? null : id);
   };
 
+  // Handle form submission
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!selectedMovieId) {
-      alert('Please select a movie before submitting your review.');
+      showErrorToast('Please select a movie before submitting your review.');
       return;
     }
 
     try {
-      // Fetch movie details
-      const movieDetails = await movieService.getMovieDetails(selectedMovieId);
+      // Check if selected movie has changed
+      const movieHasChanged = selectedMovieId !== originalMovieId;
+      let movieDetails = null;
+
+      if (movieHasChanged) {
+        // Fetch new movie details if changed
+        movieDetails = await movieService.getMovieDetails(selectedMovieId);
+      }
 
       // Create FormData for submission
       const formData = new FormData();
 
-      // Append images to FormData
+      // Add new images to FormData
       images.forEach((image) => {
-        formData.append('images', image);
+        if (!image.isExisting) {
+          formData.append('images', (image as NewImage).file);
+        }
       });
 
-      // Append other fields to FormData
-      formData.append('title', postTitle);
-      formData.append('review', review);
-      formData.append('rating', (rating ?? 0).toString());
-      formData.append('commentsCount', '0');
-      formData.append('movieId', movieDetails.id.toString());
-      formData.append('movieName', movieDetails.title);
-      formData.append(
-        'moviePosterURL',
-        `https://image.tmdb.org/t/p/w500/${movieDetails.poster_path}`,
-      );
+      // Create update data object
+      interface UpdateData {
+        title: string;
+        review: string;
+        rating: number;
+        existingImages: string[];
+        imagesToDelete: string[];
+        movieId?: string;
+        movieName?: string;
+        moviePosterURL?: string;
+      }
 
-      // Send post to backend
-      await postService.createPost(formData);
+      const updateData: UpdateData = {
+        title: postTitle,
+        review,
+        rating: rating ?? 0,
+        existingImages: [],
+        imagesToDelete: [],
+      };
 
-      // Show success toast
-      showSuccessToast('Post created successfully!');
+      // Add existing images to keep
+      const existingImages = images
+        .filter((img): img is ExistingImage => img.isExisting)
+        .map((img) => img.originalUrl);
 
-      // Navigate to home page after successful submission
-      navigate('/');
+      updateData.existingImages = existingImages;
+      updateData.imagesToDelete = imagesToDelete;
+
+      // Add movie data if changed
+      if (movieHasChanged && movieDetails) {
+        updateData.movieId = movieDetails.id.toString();
+        updateData.movieName = movieDetails.title;
+        updateData.moviePosterURL = `https://image.tmdb.org/t/p/w500/${movieDetails.poster_path}`;
+      }
+
+      // Append all update data
+      formData.append('updateData', JSON.stringify(updateData));
+
+      // Send update to backend
+      await postService.updatePostWithImages(postId!, formData);
+
+      // Show success notification
+      showSuccessToast('Post updated successfully!');
+
+      // Navigate back to my reviews
+      navigate('/my-reviews');
     } catch (error) {
-      // Show error toast
       if (error instanceof Error) {
-        showErrorToast(`Error creating post: ${error.message}`);
+        showErrorToast(`Error updating post: ${error.message}`);
       } else {
-        showErrorToast('An unknown error occurred while creating the post.');
+        showErrorToast('An unknown error occurred while updating the post.');
       }
     }
   };
 
+  // Render movie grid for search results
   const renderMovieGrid = () => {
     if (!hasSearched) {
       return null;
@@ -222,6 +343,14 @@ const AddPost = () => {
     );
   };
 
+  if (fetchingPost) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{
@@ -249,25 +378,25 @@ const AddPost = () => {
               boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)',
             }}
           >
-            <MovieIcon sx={{ fontSize: 36, mr: 2, color: 'primary.main', opacity: 0.9 }} />
+            <EditIcon sx={{ fontSize: 36, mr: 2, color: 'primary.main', opacity: 0.9 }} />
             <Typography variant="h4" fontWeight="500" color="text.primary">
-              Create Review
+              Edit Review
             </Typography>
           </Box>
           <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
-            Share your cinematic experience with the community
+            Update your review for {movieName}
           </Typography>
         </Box>
 
         <form onSubmit={handleSubmit}>
           <FormSection>
             <Typography variant="h6" gutterBottom color="text.primary" fontWeight="500">
-              Movie Selection
+              Change Movie (Optional)
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <TextField
                 fullWidth
-                placeholder="Type movie title..."
+                placeholder="Type movie title to search..."
                 value={movieQuery}
                 onChange={(e) => setMovieQuery(e.target.value)}
                 disabled={isLoading}
@@ -398,10 +527,10 @@ const AddPost = () => {
               Visual Impressions
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Add up to 3 images to share your experience (optional)
+              Manage your images (up to 3 images)
             </Typography>
 
-            {previewUrls.length < 3 && (
+            {images.length < 3 && (
               <ImageUploadBox onClick={handleImageUploadClick}>
                 <input
                   type="file"
@@ -423,14 +552,14 @@ const AddPost = () => {
                   Click to upload images
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  ({3 - previewUrls.length} remaining)
+                  ({3 - images.length} remaining)
                 </Typography>
               </ImageUploadBox>
             )}
 
-            {previewUrls.length > 0 && (
+            {images.length > 0 && (
               <ImagePreviewContainer>
-                {previewUrls.map((url, index) => (
+                {images.map((image, index) => (
                   <Box
                     key={index}
                     sx={{
@@ -443,7 +572,7 @@ const AddPost = () => {
                     }}
                   >
                     <ImagePreview
-                      src={url}
+                      src={image.url}
                       alt={`Preview ${index + 1}`}
                       sx={{
                         position: 'absolute',
@@ -476,7 +605,22 @@ const AddPost = () => {
 
           <Divider sx={{ my: 4 }} />
 
-          <Box sx={{ textAlign: 'center' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="large"
+              onClick={() => navigate('/my-reviews')}
+              sx={{
+                py: 1.5,
+                px: 4,
+                borderRadius: 1.5,
+                textTransform: 'none',
+                fontSize: '1.1rem',
+              }}
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
               variant="contained"
@@ -490,7 +634,7 @@ const AddPost = () => {
                 fontSize: '1.1rem',
               }}
             >
-              Submit Review
+              Update Review
             </Button>
           </Box>
         </form>
@@ -499,4 +643,4 @@ const AddPost = () => {
   );
 };
 
-export default AddPost;
+export default EditPost;

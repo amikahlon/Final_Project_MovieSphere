@@ -2,7 +2,6 @@ import { useState, useEffect, PropsWithChildren } from 'react';
 import Box from '@mui/material/Box';
 import Sidebar from 'layouts/main-layout/sidebar';
 import Topbar from 'layouts/main-layout/topbar';
-import Footer from './footer';
 
 const drawerWidth = 240; // רוחב Sidebar מותאם
 
@@ -60,9 +59,6 @@ const MainLayout = ({ children }: PropsWithChildren) => {
           >
             {children}
           </Box>
-
-          {/* Footer */}
-          <Footer />
         </Box>
       </Box>
     </Box>
