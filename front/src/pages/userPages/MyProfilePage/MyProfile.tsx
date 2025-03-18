@@ -245,7 +245,7 @@ const MyProfile = () => {
   const getProfilePictureUrl = (path: string) => {
     // Check if path is a full URL or a relative path
     if (path && !path.startsWith('http')) {
-      return `http://localhost:${import.meta.env.VITE_SERVER_PORT}${path}`;
+      return `${import.meta.env.VITE_BACKEND_URL}${path}`;
     }
     return path || '/placeholder-avatar.png'; // Fallback to placeholder if no image
   };

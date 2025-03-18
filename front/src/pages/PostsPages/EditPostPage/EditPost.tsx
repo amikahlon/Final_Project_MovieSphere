@@ -98,7 +98,7 @@ const EditPost = () => {
           // Use the same image URL format as in PostDetails component
           const fullUrl = imageUrl.startsWith('http')
             ? imageUrl
-            : `http://localhost:${import.meta.env.VITE_SERVER_PORT}${imageUrl}`;
+            : `${import.meta.env.VITE_BACKEND_URL}${imageUrl}`;
 
           return {
             url: fullUrl,
