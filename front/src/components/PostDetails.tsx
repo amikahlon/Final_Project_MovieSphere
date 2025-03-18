@@ -325,7 +325,7 @@ const PostDetails: React.FC<PostDetailsProps> = ({ postId }) => {
                         }}
                       >
                         <img
-                          src={`http://localhost:${import.meta.env.VITE_SERVER_PORT}${image}`}
+                          src={`${import.meta.env.VITE_BACKEND_URL}${image}`}
                           alt={`Image ${index}`}
                           style={{ width: '100%', height: 200, objectFit: 'cover' }}
                         />

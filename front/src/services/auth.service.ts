@@ -3,7 +3,7 @@ import { SignInResponse, SignUpResponse, LogoutResponse } from '../interfaces/au
 import { updateTokens } from '../store/slices/userSlice';
 import { Dispatch } from '@reduxjs/toolkit';
 
-const API_URL = 'http://localhost:8000/api/users';
+const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/users`;
 
 // Add a function to upload profile images first
 const uploadProfileImage = async (imageFile: File): Promise<string> => {
