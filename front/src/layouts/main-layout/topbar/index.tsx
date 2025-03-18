@@ -114,6 +114,15 @@ const Topbar = ({ isClosing, mobileOpen, setMobileOpen }: TopbarProps) => {
 
   const [modalOpen, setModalOpen] = useState(false);
 
+  // Helper function to get the complete profile picture URL
+  const getProfilePictureUrl = (path: string | undefined) => {
+    // Check if path exists and is a relative path
+    if (path && !path.startsWith('http')) {
+      return `http://localhost:${import.meta.env.VITE_SERVER_PORT}${path}`;
+    }
+    return path || '/placeholder-avatar.png'; // Fallback to placeholder if no image
+  };
+
   const handleOpenModal = () => setModalOpen(true);
   const handleCloseModal = () => setModalOpen(false);
 
@@ -220,7 +229,7 @@ const Topbar = ({ isClosing, mobileOpen, setMobileOpen }: TopbarProps) => {
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                 fontSize: { xs: '0.875rem', sm: '1rem' },
               }}
-              src={userData?.profilePicture || ''}
+              src={userData?.profilePicture ? getProfilePictureUrl(userData.profilePicture) : ''}
             >
               {userData ? userData.username.charAt(0).toUpperCase() : 'G'}
             </Avatar>

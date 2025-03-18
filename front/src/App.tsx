@@ -10,19 +10,20 @@ const App = () => {
   const [tokenUpdated, setTokenUpdated] = useState(false);
 
   useEffect(() => {
-    // This runs on every route change to check token status,
-    // but only refreshes the token if it's actually invalid
-    userService.checkAndLogTokenStatus(dispatch);
-    // The refresh happens inside checkAndLogTokenStatus only when needed
+    const checkToken = async () => {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken || userService.isTokenExpiringSoon(accessToken)) {
+        await userService.checkAndLogTokenStatus(dispatch);
+      }
+    };
+    checkToken();
   }, [location, dispatch]);
 
   useEffect(() => {
     const handleTokenUpdate = () => {
-      setTokenUpdated(true);
+      setTokenUpdated((prev) => !prev);
     };
-
     window.addEventListener('tokenUpdated', handleTokenUpdate);
-
     return () => {
       window.removeEventListener('tokenUpdated', handleTokenUpdate);
     };

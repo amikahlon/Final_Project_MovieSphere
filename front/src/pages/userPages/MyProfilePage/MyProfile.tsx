@@ -9,6 +9,14 @@ import {
   IconButton,
   Tooltip,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import EmailIcon from '@mui/icons-material/Email';
@@ -17,6 +25,12 @@ import styled from '@emotion/styled';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import userService from '../../../services/user.service';
 import { ProfileUser } from '../../../interfaces/user.intefaces';
+import { useDispatch } from 'react-redux';
+import {
+  updateUsername as updateUsernameAction,
+  updateProfilePicture as updateProfilePictureAction,
+} from '../../../store/slices/userSlice';
+import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 
 const ProfileHeader = styled(Paper)`
   padding: 2rem;
@@ -94,6 +108,29 @@ const MyProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // States for username editing
+  const [isEditNameDialogOpen, setIsEditNameDialogOpen] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // New states for profile picture editing
+  const [isEditPhotoDialogOpen, setIsEditPhotoDialogOpen] = useState(false);
+  const [newProfileImage, setNewProfileImage] = useState<File | null>(null);
+  const [newProfileImagePreview, setNewProfileImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+
+  const dispatch = useDispatch();
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -108,6 +145,142 @@ const MyProfile = () => {
 
     fetchProfile();
   }, []);
+
+  // New handlers for username update
+  const handleEditNameClick = () => {
+    if (profile) {
+      setNewUsername(profile.username);
+      setIsEditNameDialogOpen(true);
+    }
+  };
+
+  const handleNameDialogClose = () => {
+    setIsEditNameDialogOpen(false);
+  };
+
+  const handleUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setNewUsername(event.target.value);
+  };
+
+  const handleUsernameUpdate = async () => {
+    if (!newUsername.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Username cannot be empty',
+        severity: 'error',
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const updatedUser = await userService.updateUsername(newUsername);
+      setProfile(updatedUser);
+
+      // Update username in Redux store
+      dispatch(updateUsernameAction(newUsername));
+
+      setSnackbar({
+        open: true,
+        message: 'Username updated successfully',
+        severity: 'success',
+      });
+      handleNameDialogClose();
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Failed to update username',
+        severity: 'error',
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  // Profile picture update handlers
+  const handleEditPhotoClick = () => {
+    setIsEditPhotoDialogOpen(true);
+  };
+
+  const handlePhotoDialogClose = () => {
+    setIsEditPhotoDialogOpen(false);
+    // Clear the preview and file selection when closing the dialog
+    setNewProfileImage(null);
+    if (newProfileImagePreview) {
+      URL.revokeObjectURL(newProfileImagePreview);
+      setNewProfileImagePreview(null);
+    }
+  };
+
+  const handleProfileImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      // Clean up the previous preview URL if it exists
+      if (newProfileImagePreview) {
+        URL.revokeObjectURL(newProfileImagePreview);
+      }
+
+      const file = event.target.files[0];
+      setNewProfileImage(file);
+
+      // Create a preview URL for the selected image
+      const previewUrl = URL.createObjectURL(file);
+      setNewProfileImagePreview(previewUrl);
+    }
+  };
+
+  const handleProfileImageUpdate = async () => {
+    if (!newProfileImage) {
+      setSnackbar({
+        open: true,
+        message: 'Please select an image',
+        severity: 'error',
+      });
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      // Step 1: Upload the image to the server
+      const imageUrl = await userService.uploadProfileImage(newProfileImage);
+
+      // Step 2: Update the user's profile with the new image URL
+      const updatedUser = await userService.updateProfilePicture(imageUrl);
+
+      // Step 3: Update local state
+      setProfile(updatedUser);
+
+      // Step 4: Update Redux store
+      dispatch(updateProfilePictureAction(imageUrl));
+
+      setSnackbar({
+        open: true,
+        message: 'Profile picture updated successfully',
+        severity: 'success',
+      });
+      handlePhotoDialogClose();
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Failed to update profile picture',
+        severity: 'error',
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  // Helper function to get the complete profile picture URL
+  const getProfilePictureUrl = (path: string) => {
+    // Check if path is a full URL or a relative path
+    if (path && !path.startsWith('http')) {
+      return `http://localhost:${import.meta.env.VITE_SERVER_PORT}${path}`;
+    }
+    return path || '/placeholder-avatar.png'; // Fallback to placeholder if no image
+  };
 
   if (loading) {
     return (
@@ -173,7 +346,10 @@ const MyProfile = () => {
         <ProfileHeader elevation={0}>
           <Box sx={{ textAlign: 'center' }}>
             <Box sx={{ position: 'relative', display: 'inline-block' }}>
-              <ProfileAvatar src={profile.profilePicture} alt={profile.username} />
+              <ProfileAvatar
+                src={getProfilePictureUrl(profile.profilePicture)}
+                alt={profile.username}
+              />
               <Tooltip title="Edit Profile Picture">
                 <EditButton
                   sx={{
@@ -181,6 +357,7 @@ const MyProfile = () => {
                     bottom: 20,
                     right: 0,
                   }}
+                  onClick={handleEditPhotoClick}
                 >
                   <EditIcon />
                 </EditButton>
@@ -192,7 +369,7 @@ const MyProfile = () => {
                 {profile.username}
               </Typography>
               <Tooltip title="Edit Name">
-                <EditButton size="small">
+                <EditButton size="small" onClick={handleEditNameClick}>
                   <EditIcon />
                 </EditButton>
               </Tooltip>
@@ -238,6 +415,100 @@ const MyProfile = () => {
           </Box>
         </GenreSection>
       </Container>
+
+      {/* Username Edit Dialog */}
+      <Dialog open={isEditNameDialogOpen} onClose={handleNameDialogClose}>
+        <DialogTitle>Update Username</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Username"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={newUsername}
+            onChange={handleUsernameChange}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleNameDialogClose}>Cancel</Button>
+          <Button onClick={handleUsernameUpdate} color="primary" disabled={isUpdating}>
+            {isUpdating ? 'Updating...' : 'Update'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Profile Picture Edit Dialog */}
+      <Dialog open={isEditPhotoDialogOpen} onClose={handlePhotoDialogClose}>
+        <DialogTitle>Update Profile Picture</DialogTitle>
+        <DialogContent>
+          <Box
+            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2, mb: 2 }}
+          >
+            {newProfileImagePreview ? (
+              <Avatar
+                src={newProfileImagePreview}
+                alt="New Profile Image"
+                sx={{
+                  width: 150,
+                  height: 150,
+                  mb: 2,
+                  border: '3px solid',
+                  borderColor: 'primary.main',
+                }}
+              />
+            ) : (
+              <Avatar
+                sx={{
+                  width: 150,
+                  height: 150,
+                  mb: 2,
+                  bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <AddAPhotoIcon sx={{ fontSize: 60, color: 'primary.main', opacity: 0.5 }} />
+              </Avatar>
+            )}
+
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<AddAPhotoIcon />}
+              sx={{ mt: 1 }}
+            >
+              Choose Image
+              <input type="file" hidden accept="image/*" onChange={handleProfileImageChange} />
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handlePhotoDialogClose}>Cancel</Button>
+          <Button
+            onClick={handleProfileImageUpdate}
+            color="primary"
+            disabled={isUploadingImage || !newProfileImage}
+          >
+            {isUploadingImage ? 'Uploading...' : 'Update'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for feedback */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

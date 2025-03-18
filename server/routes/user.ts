@@ -5,7 +5,10 @@ import {
   getMyProfileDetails,
   updateUser,
   deleteUser,
-  getAllUsers, // Add this import
+  getAllUsers,
+  updateUsername,
+  uploadProfileImage, // Add this import
+  updateProfilePicture, // Add this import
 } from "../controllers/user";
 import {
   googleSignin,
@@ -16,6 +19,7 @@ import {
   isAuthenticated,
   isAdmin,
 } from "../middleware/auth";
+import { uploadImages } from "../middleware/filesupload"; // Add this import
 
 const router = express.Router();
 
@@ -32,6 +36,20 @@ router.post("/access-token-status", accessTokenStatus);
 
 // עבור משתמשים מחוברים
 router.get("/me", isAuthenticated, getMyProfileDetails); // הפרופיל שלי
+
+// New route for updating username - MOVED BEFORE THE /:id ROUTE
+router.put("/update-username", isAuthenticated, updateUsername);
+
+// Add profile image upload route
+router.post(
+  "/upload-profile-image",
+  uploadImages.single("file"),
+  uploadProfileImage
+);
+
+// Add the new route for updating profile picture
+router.put("/update-profile-picture", isAuthenticated, updateProfilePicture);
+
 router.get("/:id", isAuthenticated, getUserById); // מידע על משתמשים אחרים
 
 // Protected admin routes

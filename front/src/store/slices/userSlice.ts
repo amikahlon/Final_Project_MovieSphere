@@ -69,6 +69,18 @@ const userSlice = createSlice({
         console.log('Updated favorite genres:', state.user.favoriteGenres);
       }
     },
+    updateUsername: (state, action: PayloadAction<string>) => {
+      if (state.user) {
+        state.user.username = action.payload;
+        console.log('Updated username in Redux:', action.payload);
+      }
+    },
+    updateProfilePicture: (state, action: PayloadAction<string>) => {
+      if (state.user) {
+        state.user.profilePicture = action.payload;
+        console.log('Updated profile picture in Redux:', action.payload);
+      }
+    },
   },
 });
 
@@ -79,6 +91,8 @@ export const {
   updateTokens,
   clearUser,
   updateFavoriteGenres,
+  updateUsername,
+  updateProfilePicture,
 } = userSlice.actions;
 
 export const selectUser = (state: { user: UserState }) => state.user.user;
