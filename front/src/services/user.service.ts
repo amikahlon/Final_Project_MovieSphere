@@ -2,7 +2,7 @@ import axios from 'axios';
 import { ProfileUser } from '../interfaces/user.intefaces';
 import Cookies from 'js-cookie';
 
-const API_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT}/api/users`;
+const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/users`;
 
 const getMyProfile = async (): Promise<ProfileUser> => {
   const accessToken = Cookies.get('accessToken');
