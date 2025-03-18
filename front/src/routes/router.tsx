@@ -5,8 +5,10 @@ import HomePage from 'pages/HomePage/HomePage';
 import Signin from 'pages/AuthenticationPages/Signin';
 import Signup from 'pages/AuthenticationPages/Signup';
 import AddPost from 'pages/PostsPages/AddPostPage/AddPost';
+import EditPost from 'pages/PostsPages/EditPostPage/EditPost'; // Import EditPost component
 import MyProfile from 'pages/userPages/MyProfilePage/MyProfile';
 import PostDetails from 'pages/PostsPages/PostDetailsPage/PostDetails';
+import MyReviews from 'pages/MyReviews/MyReviews';
 import App from 'App';
 import Feed from 'pages/FeedPage/FeedPage';
 import {
@@ -43,12 +45,20 @@ const routes: RouteObject[] = [
             element: <PostDetails />,
           },
           {
+            path: '/edit-post/:postId', // Add the edit post route
+            element: <EditPost />,
+          },
+          {
             path: '/feed',
             element: <Feed />,
           },
           {
             path: '/users/myprofile',
             element: <MyProfile />,
+          },
+          {
+            path: '/MyReviews',
+            element: <MyReviews />,
           },
         ],
       },

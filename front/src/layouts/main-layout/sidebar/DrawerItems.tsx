@@ -15,6 +15,7 @@ import FeedIcon from '@mui/icons-material/Feed';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
+import RateReviewIcon from '@mui/icons-material/RateReview';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -32,6 +33,7 @@ const DrawerItems = ({ isCollapsed, onToggleCollapse }: DrawerItemsProps) => {
     // { id: 'signup', label: 'Sign Up', path: paths.signup, icon: <PersonAddIcon /> },
     { id: 'addpost', label: 'Add Post', path: paths.addpost, icon: <AddBoxIcon /> },
     { id: 'myprofile', label: 'My Profile', path: paths.myprofile, icon: <PersonIcon /> },
+    { id: 'MyReviews', label: 'My Reviews', path: paths.MyReviews, icon: <RateReviewIcon /> },
   ];
 
   const handleLogout = async () => {

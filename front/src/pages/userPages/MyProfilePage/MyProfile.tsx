@@ -3,7 +3,6 @@ import {
   Box,
   Container,
   Typography,
-  Chip,
   Avatar,
   Paper,
   IconButton,
@@ -20,7 +19,6 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import EmailIcon from '@mui/icons-material/Email';
-import LocalMoviesIcon from '@mui/icons-material/LocalMovies';
 import styled from '@emotion/styled';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import userService from '../../../services/user.service';
@@ -55,36 +53,6 @@ const UserInfoSection = styled(Box)`
   align-items: center;
   margin: 0.5rem 0;
   color: rgba(0, 0, 0, 0.7);
-`;
-
-const GenreSection = styled(Box)`
-  background: rgba(255, 255, 255, 0.94);
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-`;
-
-const GenreChip = styled(Chip)`
-  margin: 0.5rem;
-  padding: 1.2rem 1rem;
-  font-size: 1rem;
-  background: linear-gradient(135deg, rgba(107, 141, 214, 0.7) 0%, rgba(142, 55, 215, 0.7) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  color: white;
-  font-weight: 500;
-  transition: all 0.2s ease-in-out;
-  border-radius: 25px;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 15px rgba(107, 141, 214, 0.2);
-    background: linear-gradient(135deg, rgba(107, 141, 214, 0.9) 0%, rgba(142, 55, 215, 0.9) 100%);
-  }
-
-  &:active {
-    transform: translateY(-1px);
-  }
 `;
 
 const NameSection = styled(Box)`
@@ -381,39 +349,6 @@ const MyProfile = () => {
             </UserInfoSection>
           </Box>
         </ProfileHeader>
-
-        <GenreSection>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <LocalMoviesIcon sx={{ fontSize: 28, mr: 1, color: 'primary.main', opacity: 0.9 }} />
-            <Typography variant="h6" fontWeight="500" color="text.primary">
-              Favorite Genres
-            </Typography>
-          </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 1.5,
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: '1rem 0',
-            }}
-          >
-            {profile.favoriteGenres.map((genre) => (
-              <GenreChip
-                key={genre}
-                label={genre}
-                onClick={() => {}}
-                sx={{
-                  '& .MuiChip-label': {
-                    padding: '0 16px',
-                  },
-                }}
-              />
-            ))}
-          </Box>
-        </GenreSection>
       </Container>
 
       {/* Username Edit Dialog */}

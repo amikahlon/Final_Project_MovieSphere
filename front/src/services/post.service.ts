@@ -78,6 +78,24 @@ const updatePost = async (postId: string, postData: Partial<IPost>): Promise<Pos
   }
 };
 
+// Update a post with images
+const updatePostWithImages = async (postId: string, formData: FormData): Promise<Post> => {
+  try {
+    const response = await axiosInstance.put(`${POST_API_URL}/${postId}/withImages`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data', // Override Content-Type for this request
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || 'Failed to update the post';
+      throw new Error(message);
+    }
+    throw new Error('An unknown error occurred');
+  }
+};
+
 // Delete a post by ID
 const deletePost = async (postId: string): Promise<void> => {
   try {
@@ -161,7 +179,10 @@ const deletePostsByUserId = async (userId: string): Promise<void> => {
 };
 
 // Get posts by range (startIndex to endIndex)
-const getPostsInRange = async (startIndex: number, endIndex: number): Promise<{ posts: Post[], totalPosts: number }> => {
+const getPostsInRange = async (
+  startIndex: number,
+  endIndex: number,
+): Promise<{ posts: Post[]; totalPosts: number }> => {
   try {
     const response = await axiosInstance.get(`${POST_API_URL}/range`, {
       params: { startIndex, endIndex },
@@ -176,6 +197,41 @@ const getPostsInRange = async (startIndex: number, endIndex: number): Promise<{ 
   }
 };
 
+// Get current user's posts
+const getCurrentUserPosts = async (): Promise<Post[]> => {
+  try {
+    const response = await axiosInstance.get(`${POST_API_URL}/myposts`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || 'Failed to fetch current user posts';
+      throw new Error(message);
+    }
+    throw new Error('An unknown error occurred');
+  }
+};
+
+// Get posts filtered by rating range
+const getPostsByRatingRange = async (
+  minRating: number,
+  maxRating: number,
+  startIndex: number,
+  endIndex: number,
+): Promise<{ posts: Post[]; totalPosts: number }> => {
+  try {
+    const response = await axiosInstance.get(`${POST_API_URL}/byRating`, {
+      params: { minRating, maxRating, startIndex, endIndex },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message || 'Failed to fetch posts by rating range';
+      throw new Error(message);
+    }
+    throw new Error('An unknown error occurred');
+  }
+};
+
 // Export all the services
 const postService = {
   createPost,
@@ -183,13 +239,16 @@ const postService = {
   getPostsByUserId,
   getPostById,
   updatePost,
+  updatePostWithImages, // Add the new service
   deletePost,
   likePost,
   unlikePost,
   getPopularPosts,
   searchPosts,
   deletePostsByUserId,
-  getPostsInRange
+  getPostsInRange,
+  getCurrentUserPosts,
+  getPostsByRatingRange,
 };
 
 export default postService;
