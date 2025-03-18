@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -40,6 +41,7 @@ interface Movie {
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 const AddPost = () => {
+  const navigate = useNavigate();
   const [movieQuery, setMovieQuery] = useState<string>('');
   const [lastSearchedQuery, setLastSearchedQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
@@ -112,24 +114,24 @@ const AddPost = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-  
+
     if (!selectedMovieId) {
       alert('Please select a movie before submitting your review.');
       return;
     }
-  
+
     try {
       // Fetch movie details
       const movieDetails = await movieService.getMovieDetails(selectedMovieId);
-  
+
       // Create FormData for submission
       const formData = new FormData();
-  
+
       // Append images to FormData
       images.forEach((image) => {
         formData.append('images', image);
       });
-  
+
       // Append other fields to FormData
       formData.append('title', postTitle);
       formData.append('review', review);
@@ -139,15 +141,17 @@ const AddPost = () => {
       formData.append('movieName', movieDetails.title);
       formData.append(
         'moviePosterURL',
-        `https://image.tmdb.org/t/p/w500/${movieDetails.poster_path}`
+        `https://image.tmdb.org/t/p/w500/${movieDetails.poster_path}`,
       );
-  
+
       // Send post to backend
-      /*const response = */ await postService.createPost(formData);
-  
+      await postService.createPost(formData);
+
       // Show success toast
       showSuccessToast('Post created successfully!');
-  
+
+      // Navigate to home page after successful submission
+      navigate('/');
     } catch (error) {
       // Show error toast
       if (error instanceof Error) {

@@ -10,14 +10,14 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { Person, Email, Lock } from '@mui/icons-material';
+import { Person, Email, Lock, AddAPhoto, Delete } from '@mui/icons-material';
 import paths from 'routes/paths';
 import { CredentialResponse, GoogleLogin } from '@react-oauth/google';
 import userService from '../../services/auth.service';
 import Cookies from 'js-cookie';
 import { useDispatch } from 'react-redux';
 import { signIn } from 'store/slices/userSlice';
-import { Alert, AlertColor } from '@mui/material';
+import { Alert, AlertColor, Avatar } from '@mui/material';
 
 interface User {
   username: string;
@@ -30,6 +30,8 @@ const Signup = () => {
   const [user, setUser] = useState<User>({ username: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const [alertInfo, setAlertInfo] = useState<{
     show: boolean;
     message: string;
@@ -44,40 +46,115 @@ const Signup = () => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
+  const handleProfileImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setProfileImage(file);
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setProfileImagePreview(previewUrl);
+    }
+  };
+
+  const handleRemoveProfileImage = () => {
+    if (profileImagePreview) {
+      URL.revokeObjectURL(profileImagePreview);
+    }
+    setProfileImage(null);
+    setProfileImagePreview(null);
+  };
+
+  const handleProfileImageClick = () => {
+    const fileInput = document.getElementById('profile-image-input');
+    if (fileInput) {
+      fileInput.click();
+    }
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const response = await userService.signup(user);
-      console.log('Server response:', response); // הוספת לוג לבדיקת התשובה מהשרת
+      // Create a FormData object if there's a profile image
+      if (profileImage) {
+        const formData = new FormData();
+        formData.append('email', user.email);
+        formData.append('password', user.password);
+        formData.append('username', user.username);
 
-      const userData = {
-        username: response.user.username,
-        email: response.user.email,
-        role: response.user.role,
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        profilePicture: response.user.profilePicture,
-        favoriteGenres: Array.isArray(response.user.favoriteGenres)
-          ? response.user.favoriteGenres
-          : [],
-      };
+        // This is critical - the field name must match what the server's multer config expects
+        // Looking at your server code, it seems 'profileUrl' is just a string path, not the actual file
+        // Let's try with the field name 'profileImage' as that might be what multer is configured to look for
+        formData.append('profileImage', profileImage, profileImage.name);
 
-      console.log('Dispatching user data:', userData); // לוג לפני ה-dispatch
-      dispatch(signIn(userData));
+        console.log('Submitting signup with profile image:', profileImage.name);
+        console.log('FormData:', formData);
 
-      Cookies.set('accessToken', response.accessToken, {
-        secure: true,
-        sameSite: 'strict',
-        path: '/',
-      });
+        const response = await userService.signup(formData);
+        console.log('Server response:', response);
 
-      Cookies.set('refreshToken', response.refreshToken, {
-        secure: true,
-        sameSite: 'strict',
-        path: '/',
-      });
+        const userData = {
+          username: response.user.username,
+          email: response.user.email,
+          role: response.user.role,
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
+          profilePicture: response.user.profilePicture,
+          favoriteGenres: Array.isArray(response.user.favoriteGenres)
+            ? response.user.favoriteGenres
+            : [],
+        };
 
-      navigate(paths.dashboard);
+        console.log('Dispatching user data:', userData);
+        dispatch(signIn(userData));
+
+        Cookies.set('accessToken', response.accessToken, {
+          secure: true,
+          sameSite: 'strict',
+          path: '/',
+        });
+
+        Cookies.set('refreshToken', response.refreshToken, {
+          secure: true,
+          sameSite: 'strict',
+          path: '/',
+        });
+
+        navigate(paths.dashboard);
+      } else {
+        // Regular signup without profile image
+        const response = await userService.signup(user);
+        console.log('Server response:', response);
+
+        const userData = {
+          username: response.user.username,
+          email: response.user.email,
+          role: response.user.role,
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
+          profilePicture: response.user.profilePicture,
+          favoriteGenres: Array.isArray(response.user.favoriteGenres)
+            ? response.user.favoriteGenres
+            : [],
+        };
+
+        console.log('Dispatching user data:', userData);
+        dispatch(signIn(userData));
+
+        Cookies.set('accessToken', response.accessToken, {
+          secure: true,
+          sameSite: 'strict',
+          path: '/',
+        });
+
+        Cookies.set('refreshToken', response.refreshToken, {
+          secure: true,
+          sameSite: 'strict',
+          path: '/',
+        });
+
+        navigate(paths.dashboard);
+      }
     } catch (error) {
       console.error('Signup error:', error);
       setAlertInfo({
@@ -91,7 +168,7 @@ const Signup = () => {
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
       const response = await userService.googleSignin(credentialResponse.credential!);
-      console.log('Google signin response:', response); // הוספת לוג לבדיקת התשובה מהשרת
+      console.log('Google signin response:', response);
 
       const userData = {
         username: response.user.username,
@@ -105,7 +182,7 @@ const Signup = () => {
           : [],
       };
 
-      console.log('Dispatching Google user data:', userData); // לוג לפני ה-dispatch
+      console.log('Dispatching Google user data:', userData);
       dispatch(signIn(userData));
 
       Cookies.set('accessToken', response.accessToken, {
@@ -229,6 +306,79 @@ const Signup = () => {
         </Stack>
 
         <Stack component="form" mt={3} onSubmit={handleSubmit} direction="column" gap={2}>
+          {/* Profile Image Upload */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
+            <Typography variant="body1" color="text.secondary" mb={1}>
+              Profile Picture (optional)
+            </Typography>
+
+            <input
+              type="file"
+              id="profile-image-input"
+              hidden
+              accept="image/*"
+              onChange={handleProfileImageUpload}
+            />
+
+            {profileImagePreview ? (
+              <Box sx={{ position: 'relative' }}>
+                <Avatar
+                  src={profileImagePreview}
+                  alt="Profile Preview"
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    cursor: 'pointer',
+                    border: '2px solid',
+                    borderColor: 'primary.main',
+                  }}
+                  onClick={handleProfileImageClick}
+                />
+                <IconButton
+                  size="small"
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    },
+                  }}
+                  onClick={handleRemoveProfileImage}
+                >
+                  <Delete fontSize="small" />
+                </IconButton>
+              </Box>
+            ) : (
+              <Box
+                onClick={handleProfileImageClick}
+                sx={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  border: '2px dashed',
+                  borderColor: 'primary.light',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                  },
+                }}
+              >
+                <AddAPhoto sx={{ fontSize: 40, color: 'primary.main', opacity: 0.8 }} />
+                <Typography variant="caption" color="text.secondary" mt={1}>
+                  Choose Image
+                </Typography>
+              </Box>
+            )}
+          </Box>
+
           <TextField
             id="username"
             name="username"

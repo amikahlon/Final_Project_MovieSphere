@@ -44,7 +44,13 @@ const Feed: React.FC = () => {
 
   // Fetch visible posts dynamically based on the range
   const handleItemsRendered = useCallback(
-    ({ overscanStartIndex, overscanStopIndex }: { overscanStartIndex: number; overscanStopIndex: number }) => {
+    ({
+      overscanStartIndex,
+      overscanStopIndex,
+    }: {
+      overscanStartIndex: number;
+      overscanStopIndex: number;
+    }) => {
       // Add a buffer to overscan range
       const buffer = 1; // at-least 1
       const startIndex = Math.max(0, overscanStartIndex - buffer);
@@ -53,7 +59,7 @@ const Feed: React.FC = () => {
       // Fetch posts for the range if not already fetched
       fetchPostsInRange(startIndex, endIndex);
     },
-    [fetchPostsInRange]
+    [fetchPostsInRange],
   );
 
   // Virtualized list row renderer
@@ -75,7 +81,9 @@ const Feed: React.FC = () => {
         {postId ? (
           <MemoizedPostDetails postId={postId} />
         ) : (
-          <div style={{ color: 'white', fontSize: '16px', animation: 'fade-in 0.2s' }}>Placeholder Row</div>
+          <div style={{ color: 'white', fontSize: '16px', animation: 'fade-in 0.2s' }}>
+            Placeholder Row
+          </div>
         )}
       </div>
     );
@@ -93,9 +101,7 @@ const Feed: React.FC = () => {
       overscanCount={5} // Adds 5 extra rows above and below the visible area
       onItemsRendered={handleItemsRendered}
     >
-      {({ index, style }) => (
-        <Row key={`row-${index}`} index={index} style={style} />
-      )}
+      {({ index, style }) => <Row key={`row-${index}`} index={index} style={style} />}
     </List>
   );
 };

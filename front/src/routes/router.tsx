@@ -1,5 +1,5 @@
 import { createBrowserRouter, RouteObject } from 'react-router-dom';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 import MainLayout from 'layouts/main-layout';
 import HomePage from 'pages/HomePage/HomePage';
 import Signin from 'pages/AuthenticationPages/Signin';
@@ -9,6 +9,11 @@ import MyProfile from 'pages/userPages/MyProfilePage/MyProfile';
 import PostDetails from 'pages/PostsPages/PostDetailsPage/PostDetails';
 import App from 'App';
 import Feed from 'pages/FeedPage/FeedPage';
+import {
+  AuthenticatedRoute,
+  UnauthenticatedRoute,
+} from 'components/protected-routes/ProtectedRoutes';
+import paths from './paths';
 
 const routes: RouteObject[] = [
   {
@@ -18,9 +23,11 @@ const routes: RouteObject[] = [
       {
         path: '/',
         element: (
-          <MainLayout>
-            <Outlet />
-          </MainLayout>
+          <AuthenticatedRoute>
+            <MainLayout>
+              <Outlet />
+            </MainLayout>
+          </AuthenticatedRoute>
         ),
         children: [
           {
@@ -47,11 +54,24 @@ const routes: RouteObject[] = [
       },
       {
         path: '/auth/signin',
-        element: <Signin />,
+        element: (
+          <UnauthenticatedRoute>
+            <Signin />
+          </UnauthenticatedRoute>
+        ),
       },
       {
         path: '/auth/signup',
-        element: <Signup />,
+        element: (
+          <UnauthenticatedRoute>
+            <Signup />
+          </UnauthenticatedRoute>
+        ),
+      },
+      // Redirect any unknown route to signin if not logged in
+      {
+        path: '*',
+        element: <Navigate to={paths.signin} replace />,
       },
     ],
   },

@@ -38,19 +38,23 @@ const userSlice = createSlice({
       state.user = {
         ...action.payload,
         isLoggedIn: true,
-        // וודא שמערך הג'אנרים תמיד מוגדר
         favoriteGenres: action.payload.favoriteGenres || [],
       };
-      // לוג לבדיקה
       console.log('User state after signIn:', state.user);
     },
-    updateTokens: (
-      state,
-      action: PayloadAction<{
-        accessToken: string;
-        refreshToken: string;
-      }>,
-    ) => {
+    updateAccessToken: (state, action: PayloadAction<string>) => {
+      if (state.user) {
+        state.user.accessToken = action.payload;
+        console.log('Updated accessToken:', state.user.accessToken);
+      }
+    },
+    updateRefreshToken: (state, action: PayloadAction<string>) => {
+      if (state.user) {
+        state.user.refreshToken = action.payload;
+        console.log('Updated refreshToken:', state.user.refreshToken);
+      }
+    },
+    updateTokens: (state, action: PayloadAction<{ accessToken: string; refreshToken: string }>) => {
       if (state.user) {
         state.user.accessToken = action.payload.accessToken;
         state.user.refreshToken = action.payload.refreshToken;
@@ -59,19 +63,38 @@ const userSlice = createSlice({
     clearUser: (state) => {
       state.user = null;
     },
-
     updateFavoriteGenres: (state, action: PayloadAction<string[]>) => {
       if (state.user) {
         state.user.favoriteGenres = action.payload;
         console.log('Updated favorite genres:', state.user.favoriteGenres);
       }
     },
+    updateUsername: (state, action: PayloadAction<string>) => {
+      if (state.user) {
+        state.user.username = action.payload;
+        console.log('Updated username in Redux:', action.payload);
+      }
+    },
+    updateProfilePicture: (state, action: PayloadAction<string>) => {
+      if (state.user) {
+        state.user.profilePicture = action.payload;
+        console.log('Updated profile picture in Redux:', action.payload);
+      }
+    },
   },
 });
 
-export const { signIn, updateTokens, clearUser, updateFavoriteGenres } = userSlice.actions;
+export const {
+  signIn,
+  updateAccessToken,
+  updateRefreshToken,
+  updateTokens,
+  clearUser,
+  updateFavoriteGenres,
+  updateUsername,
+  updateProfilePicture,
+} = userSlice.actions;
 
-// מחזירי מידע
 export const selectUser = (state: { user: UserState }) => state.user.user;
 export const selectIsLoggedIn = (state: { user: UserState }) => !!state.user.user?.isLoggedIn;
 export const selectIsAdmin = (state: { user: UserState }) => state.user.user?.role === 'admin';
@@ -79,7 +102,6 @@ export const selectTokens = (state: { user: UserState }) => ({
   accessToken: state.user.user?.accessToken,
   refreshToken: state.user.user?.refreshToken,
 });
-// הוספת selector ספציפי לג'אנרים
 export const selectFavoriteGenres = (state: { user: UserState }) =>
   state.user.user?.favoriteGenres || [];
 
