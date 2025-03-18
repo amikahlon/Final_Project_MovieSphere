@@ -7,6 +7,8 @@ const paths = {
   addpost: '/posts/addpost',
   myprofile: '/users/myprofile',
   postdetails: 'posts/:id',
+  MyReviews: '/MyReviews',
+  editPost: '/edit-post/:postId', // Add edit post path
 };
 
 export default paths;
