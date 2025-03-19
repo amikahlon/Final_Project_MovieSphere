@@ -86,12 +86,23 @@ const Feed: React.FC = () => {
         setNoResults(true);
       }
 
-      // Update posts
-      setPosts((prevPosts) => [...prevPosts, ...newPosts.map((post) => post._id)]);
+      // Update posts - prevent duplicates by using a Set
+      setPosts((prevPosts) => {
+        // Create a Set of existing post IDs for O(1) lookup
+        const existingPostIds = new Set(prevPosts);
+
+        // Filter out any duplicates from the new posts
+        const uniqueNewPosts = newPosts
+          .map((post) => post._id)
+          .filter((postId) => !existingPostIds.has(postId));
+
+        // Only add unique posts
+        return [...prevPosts, ...uniqueNewPosts];
+      });
 
       setTotalPosts(totalPosts);
 
-      // Check if we have more posts to load
+      // Check if we have more posts to load - adjust logic to account for duplicates
       if (newPosts.length < PAGE_SIZE || startIndex + newPosts.length >= totalPosts) {
         setHasMore(false);
       } else {

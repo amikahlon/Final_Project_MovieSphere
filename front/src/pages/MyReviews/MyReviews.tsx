@@ -173,7 +173,19 @@ const MyReviews: React.FC = () => {
             Are you sure you want to delete this review? This action cannot be undone.
           </Typography>
           <Box mt={3} display="flex" justifyContent="flex-end" gap={2}>
-            <Button variant="outlined" onClick={() => setDeleteDialogOpen(false)}>
+            <Button
+              variant="outlined"
+              onClick={() => setDeleteDialogOpen(false)}
+              sx={{
+                color: 'text.primary',
+                borderColor: 'grey.400',
+                backgroundColor: 'background.paper',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                  borderColor: 'text.primary',
+                },
+              }}
+            >
               Cancel
             </Button>
             <Button variant="contained" color="error" onClick={confirmDelete}>

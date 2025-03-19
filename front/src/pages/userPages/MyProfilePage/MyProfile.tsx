@@ -71,6 +71,37 @@ const EditButton = styled(IconButton)`
   }
 `;
 
+const DialogButton = styled(Button)`
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: none;
+  min-width: 100px;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  margin: 0 8px;
+`;
+
+const CancelButton = styled(DialogButton)`
+  background-color: #e0e0e0;
+  color: #555555;
+  &:hover {
+    background-color: #c0c0c0;
+  }
+`;
+
+const ActionButton = styled(DialogButton)`
+  background-color: #3f51b5;
+  color: white;
+  &:hover {
+    background-color: #303f9f;
+  }
+  &:disabled {
+    background-color: #7986cb;
+    color: rgba(255, 255, 255, 0.7);
+  }
+`;
+
 const MyProfile = () => {
   const [profile, setProfile] = useState<ProfileUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -352,8 +383,14 @@ const MyProfile = () => {
       </Container>
 
       {/* Username Edit Dialog */}
-      <Dialog open={isEditNameDialogOpen} onClose={handleNameDialogClose}>
-        <DialogTitle>Update Username</DialogTitle>
+      <Dialog
+        open={isEditNameDialogOpen}
+        onClose={handleNameDialogClose}
+        PaperProps={{
+          sx: { borderRadius: '12px', padding: '8px' },
+        }}
+      >
+        <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 600 }}>Update Username</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -366,17 +403,32 @@ const MyProfile = () => {
             onChange={handleUsernameChange}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleNameDialogClose}>Cancel</Button>
-          <Button onClick={handleUsernameUpdate} color="primary" disabled={isUpdating}>
+        <DialogActions sx={{ padding: '16px 24px', justifyContent: 'center' }}>
+          <CancelButton onClick={handleNameDialogClose} variant="contained" disableElevation>
+            Cancel
+          </CancelButton>
+          <ActionButton
+            onClick={handleUsernameUpdate}
+            variant="contained"
+            disabled={isUpdating}
+            disableElevation
+          >
             {isUpdating ? 'Updating...' : 'Update'}
-          </Button>
+          </ActionButton>
         </DialogActions>
       </Dialog>
 
       {/* Profile Picture Edit Dialog */}
-      <Dialog open={isEditPhotoDialogOpen} onClose={handlePhotoDialogClose}>
-        <DialogTitle>Update Profile Picture</DialogTitle>
+      <Dialog
+        open={isEditPhotoDialogOpen}
+        onClose={handlePhotoDialogClose}
+        PaperProps={{
+          sx: { borderRadius: '12px', padding: '8px' },
+        }}
+      >
+        <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 600 }}>
+          Update Profile Picture
+        </DialogTitle>
         <DialogContent>
           <Box
             sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2, mb: 2 }}
@@ -411,25 +463,46 @@ const MyProfile = () => {
             )}
 
             <Button
-              variant="outlined"
+              variant="contained"
               component="label"
               startIcon={<AddAPhotoIcon />}
-              sx={{ mt: 1 }}
+              sx={{
+                mt: 2,
+                backgroundColor: '#4caf50',
+                color: 'white',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                textTransform: 'none',
+                fontWeight: 600,
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                '&:hover': {
+                  backgroundColor: '#388e3c',
+                },
+              }}
             >
               Choose Image
               <input type="file" hidden accept="image/*" onChange={handleProfileImageChange} />
             </Button>
+
+            {newProfileImage && (
+              <Typography variant="body2" sx={{ mt: 1, color: 'success.main', fontWeight: 600 }}>
+                Image selected: {newProfileImage.name}
+              </Typography>
+            )}
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handlePhotoDialogClose}>Cancel</Button>
-          <Button
+        <DialogActions sx={{ padding: '16px 24px', justifyContent: 'center' }}>
+          <CancelButton onClick={handlePhotoDialogClose} variant="contained" disableElevation>
+            Cancel
+          </CancelButton>
+          <ActionButton
             onClick={handleProfileImageUpdate}
-            color="primary"
+            variant="contained"
             disabled={isUploadingImage || !newProfileImage}
+            disableElevation
           >
-            {isUploadingImage ? 'Uploading...' : 'Update'}
-          </Button>
+            {isUploadingImage ? 'Uploading...' : 'Upload Image'}
+          </ActionButton>
         </DialogActions>
       </Dialog>
 
