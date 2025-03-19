@@ -1,5 +1,8 @@
 import express from "express";
-import { generateMovieRecommendations, handleMovieQA } from "../controllers/chatgpt";
+import {
+  generateMovieRecommendations,
+  handleMovieQA,
+} from "../controllers/chatgpt";
 
 const router = express.Router();
 
