@@ -45,32 +45,6 @@ const HomePage = () => {
         >
           <MovieGlobe />
         </Box>
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-            gap: 4,
-          }}
-        >
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h5" gutterBottom>
-              Popular Reviews
-            </Typography>
-            {/* ********************************** */}
-            {/* Add your reviews component here */}
-            {/* ********************************** */}
-          </Paper>
-
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h5" gutterBottom>
-              Top Reviewers
-            </Typography>
-            {/* ********************************** */}
-            {/* Add your top reviewers component here */}
-            {/* ********************************** */}
-          </Paper>
-        </Box>
       </Box>
     </Container>
   );

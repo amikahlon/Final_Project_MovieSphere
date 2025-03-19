@@ -82,3 +82,6 @@ client-key.pem
 client.csr
 
 front/
+
+# Coverage directory
+coverage

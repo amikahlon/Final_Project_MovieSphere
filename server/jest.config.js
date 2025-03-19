@@ -1,10 +1,19 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
 module.exports = {
-  testEnvironment: "node",
-  transform: {
-    "^.+\\.tsx?$": ["ts-jest", {}], // תיקון קטן ל-regex
-  },
-  collectCoverage: true,
-  coverageDirectory: "coverage",
-  coverageReporters: ["html", "text"],
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  collectCoverageFrom: [
+    '**/*.ts',
+    '!**/node_modules/**',
+    '!**/dist/**',
+    '!**/coverage/**',
+    '!**/tests/**'
+  ],
+  coverageDirectory: './coverage',
+  coverageReporters: [
+    'lcov',
+    'text',
+    'html'
+  ],
+  testTimeout: 30000 // מגדיר timeout ארוך יותר לטסטים
 };
