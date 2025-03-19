@@ -9,6 +9,7 @@ import {
   Avatar,
   Button,
   TextField,
+  Modal,
 } from '@mui/material';
 import {
   Star as StarIcon,
@@ -18,6 +19,7 @@ import {
   Edit as EditIcon,
   Send as SendIcon,
   Delete as DeleteIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import postService from 'services/post.service';
 import commentService from 'services/comment.service';
@@ -68,6 +70,11 @@ const PostDetails: React.FC<PostDetailsProps> = ({ postId }) => {
   const [editedComment, setEditedComment] = useState<string>('');
   const [isLiked, setIsLiked] = useState<boolean | null>(post?.hasLiked ?? null);
   const [userData, setUserData] = useState<ProfileUser>();
+  // New state for image preview modal
+  const [imagePreview, setImagePreview] = useState<{ open: boolean; url: string }>({
+    open: false,
+    url: '',
+  });
 
   const navigate = useNavigate(); // Initialize navigate function
   const location = useLocation(); // Get current route
@@ -206,6 +213,22 @@ const PostDetails: React.FC<PostDetailsProps> = ({ postId }) => {
     }
   };
 
+  // Helper function to handle image click for preview
+  const handleImageClick = (imageUrl: string) => {
+    setImagePreview({
+      open: true,
+      url: imageUrl,
+    });
+  };
+
+  // Helper function to close the image preview modal
+  const handleCloseImagePreview = () => {
+    setImagePreview({
+      open: false,
+      url: '',
+    });
+  };
+
   // Render loading state
   if (loading) {
     return (
@@ -238,6 +261,56 @@ const PostDetails: React.FC<PostDetailsProps> = ({ postId }) => {
           overflow: 'hidden', // Ensures content stays within the container
         }}
       >
+        {/* Image Preview Modal */}
+        <Modal
+          open={imagePreview.open}
+          onClose={handleCloseImagePreview}
+          aria-labelledby="image-preview-modal"
+          aria-describedby="enlarged view of post image"
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              bgcolor: 'rgba(0, 0, 0, 0.8)',
+              p: 1,
+              outline: 'none',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <IconButton
+              onClick={handleCloseImagePreview}
+              sx={{
+                position: 'absolute',
+                top: 10,
+                right: 10,
+                bgcolor: 'rgba(255,255,255,0.3)',
+                color: 'white',
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.5)',
+                },
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+            <img
+              src={imagePreview.url}
+              alt="Enlarged view"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '85vh',
+                objectFit: 'contain',
+              }}
+            />
+          </Box>
+        </Modal>
+
         <MovieDetailDialog
           open={openMovieDetail}
           onClose={() => setOpenMovieDetail(false)}
@@ -322,7 +395,11 @@ const PostDetails: React.FC<PostDetailsProps> = ({ postId }) => {
                           boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
                           transition: 'transform 0.3s',
                           '&:hover': { transform: 'scale(1.05)' },
+                          cursor: 'pointer', // Add cursor pointer to indicate clickable
                         }}
+                        onClick={() =>
+                          handleImageClick(`${import.meta.env.VITE_BACKEND_URL}${image}`)
+                        }
                       >
                         <img
                           src={`${import.meta.env.VITE_BACKEND_URL}${image}`}

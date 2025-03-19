@@ -617,6 +617,16 @@ const EditPost = () => {
                 borderRadius: 1.5,
                 textTransform: 'none',
                 fontSize: '1.1rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                border: '1px solid',
+                borderColor: 'primary.main',
+                color: 'primary.main',
+                fontWeight: '500',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 1)',
+                  borderColor: 'primary.dark',
+                },
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               }}
             >
               Cancel
